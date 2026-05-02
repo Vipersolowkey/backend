@@ -12,7 +12,11 @@ React 18, Vite 5, Tailwind CSS, React Router.
    ```bash
    npm run dev
    ```
-3. Backend FastAPI phải chạy tại **http://127.0.0.1:8000** (mặc định trong `src/lib/dashboardApi.js` và một số `fetch` trong các trang). Nếu đổi port hoặc domain API, cần sửa các constant đó hoặc sau này gom qua biến `import.meta.env.VITE_*`.
+3. Backend FastAPI mặc định tại **http://127.0.0.1:8000**. Có thể đổi API base bằng biến môi trường:
+   ```bash
+   # .env.local
+   VITE_API_BASE_URL=http://127.0.0.1:8000/api/v1
+   ```
 
 ## Build & preview
 

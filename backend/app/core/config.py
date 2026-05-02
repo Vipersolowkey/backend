@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_SQLITE_URL = f"sqlite:///{(Path(__file__).resolve().parents[2] / 'test.db').as_posix()}"
@@ -54,6 +55,20 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
     )
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def use_psycopg3_for_postgres_urls(cls, v: object) -> object:
+        """Neon/Vercel use `postgresql://...`; we ship psycopg3 only (no psycopg2)."""
+        if not isinstance(v, str):
+            return v
+        if v.startswith("postgresql+psycopg://"):
+            return v
+        if v.startswith("postgresql://"):
+            return "postgresql+psycopg://" + v.removeprefix("postgresql://")
+        if v.startswith("postgres://"):
+            return "postgresql+psycopg://" + v.removeprefix("postgres://")
+        return v
 
 
 settings = Settings()
