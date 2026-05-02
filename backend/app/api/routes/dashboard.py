@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.models.analytics import MonthlyRevenueSummary
 from app.models.pms import Booking, Guest, Room, RoomType
-from app.schemas.dashboard import CancellationAlert, DashboardResponse, MonthlyRevenueCard
+from app.schemas.dashboard import CancellationAlert, DashboardResponse, MonthlyRevenueCard, OperationalPriority
+from app.services.operational_priorities import build_operational_priorities
 from app.services.predictive import predict_cancellation_risk
 
 
@@ -19,7 +20,7 @@ def get_dashboard_payload(db: Session, area_name: str = "Nha Trang") -> Dashboar
             total_revenue=0,
             average_adr=0,
             average_stay_nights=0,
-            growth_percent=0,
+            growth_percent=Decimal("0"),
         )
     else:
         previous_month = db.scalar(
@@ -80,4 +81,23 @@ def get_dashboard_payload(db: Session, area_name: str = "Nha Trang") -> Dashboar
             )
         )
 
-    return DashboardResponse(monthly_revenue=monthly_revenue, alerts=alerts[:10])
+    priority_dicts = build_operational_priorities(
+        db,
+        high_risk_booking_count=len(alerts),
+        revenue_mom_growth_percent=monthly_revenue.growth_percent,
+        latest_period_label=monthly_revenue.month_label,
+    )
+    if not priority_dicts:
+        priority_dicts = [
+            {
+                "category": "market",
+                "severity": "info",
+                "title": "No strong signals from operating rules",
+                "detail": "Occupancy, revenue MoM, and HIGH-risk queue are within current thresholds.",
+                "suggested_action": "Use Revenue Manager briefing and Competitors to refine this week's strategy.",
+                "route_hint": "/competitors",
+            }
+        ]
+    priorities = [OperationalPriority(**row) for row in priority_dicts]
+
+    return DashboardResponse(monthly_revenue=monthly_revenue, alerts=alerts[:10], priorities=priorities)

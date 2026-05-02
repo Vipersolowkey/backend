@@ -19,6 +19,10 @@ from app.schemas.ai import (
     GuestAdvisorRequest,
     GuestAdvisorResponse,
     GuestLeadScoreResponse,
+    PricingSimulationRequest,
+    PricingSimulationResponse,
+    RevenueManagerRequest,
+    RevenueManagerResponse,
 )
 from app.services.competitor_ai import (
     generate_competitor_hotel_intelligence,
@@ -34,6 +38,8 @@ from app.services.guest_advisor import (
     prepare_guest_chat_context,
 )
 from app.services.llm import stream_text
+from app.services.pricing_simulation_ai import generate_pricing_simulation
+from app.services.revenue_manager_ai import generate_revenue_manager_brief
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 logger = logging.getLogger(__name__)
@@ -41,6 +47,29 @@ logger = logging.getLogger(__name__)
 
 def _sse(payload: dict) -> str:
     return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+@router.post("/revenue-manager-brief", response_model=RevenueManagerResponse)
+def revenue_manager_brief(
+    payload: RevenueManagerRequest,
+    db: Session = Depends(get_db),
+) -> RevenueManagerResponse:
+    return RevenueManagerResponse(**generate_revenue_manager_brief(db=db, area_name=payload.area_name))
+
+
+@router.post("/pricing-simulation", response_model=PricingSimulationResponse)
+def pricing_simulation(
+    payload: PricingSimulationRequest,
+    db: Session = Depends(get_db),
+) -> PricingSimulationResponse:
+    return PricingSimulationResponse(
+        **generate_pricing_simulation(
+            db=db,
+            area_name=payload.area_name,
+            room_type=payload.room_type,
+            scenario_input=payload.scenario_input,
+        )
+    )
 
 
 @router.post("/competitor-insights", response_model=CompetitorInsightResponse)

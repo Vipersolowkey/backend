@@ -27,7 +27,8 @@ from app.models import (
 from app.services.competitor_import import import_multiple_competitor_json_files
 
 CSV_DIR = PROJECT_DIR
-DEFAULT_COMPETITOR_JSON_PATHS = [
+BUNDLED_COMPETITOR_JSON = BACKEND_DIR / "data" / "mvp_competitors_agoda.json"
+OPTIONAL_COMPETITOR_JSON_PATHS = [
     Path(r"C:\Users\Vinh\Downloads\Agoda Properties Listings.json"),
     Path(r"C:\Users\Vinh\Downloads\Booking Hotel Listings .json"),
 ]
@@ -202,51 +203,122 @@ def seed_bookings(db, rooms: dict[str, Room], limit: int | None = 5000) -> None:
 
 
 def seed_competitor_data(db) -> None:
-    existing_json_paths = [path for path in DEFAULT_COMPETITOR_JSON_PATHS if path.exists()]
-    if existing_json_paths:
+    if BUNDLED_COMPETITOR_JSON.exists():
         import_multiple_competitor_json_files(
             db=db,
-            json_paths=existing_json_paths,
-            replace_existing=False,
+            json_paths=[BUNDLED_COMPETITOR_JSON],
+            replace_existing=True,
+        )
+        return
+
+    extra_paths = [path for path in OPTIONAL_COMPETITOR_JSON_PATHS if path.exists()]
+    if extra_paths:
+        import_multiple_competitor_json_files(
+            db=db,
+            json_paths=extra_paths,
+            replace_existing=True,
         )
         return
 
     sample_rows = [
         CompetitorData(
-            source="agoda",
+            source="agoda_json_import",
             search_area="Nha Trang",
-            hotel_name="Seaside Pearl Hotel",
-            current_price=Decimal("78.00"),
+            hotel_name="Coral Bay Residence Nha Trang",
+            current_price=Decimal("74.00"),
             currency="USD",
-            availability_status="Only 2 rooms left",
+            availability_status="Few rooms left at this price",
             hotel_url="https://www.agoda.com/",
             reviews=[
-                {"reviewer": "Alice", "review_date": "2026-04-15", "comment": "Great beach access."},
-                {"reviewer": "Bao", "review_date": "2026-04-14", "comment": "Clean rooms and helpful staff."},
+                {"reviewer": None, "review_date": None, "comment": "Quiet floor; beach is a short walk."},
+                {"reviewer": None, "review_date": None, "comment": "Good value for a sea-view room."},
             ],
         ),
         CompetitorData(
-            source="agoda",
+            source="agoda_json_import",
             search_area="Nha Trang",
-            hotel_name="Azure Bay Resort",
-            current_price=Decimal("85.00"),
+            hotel_name="Truong Hai Hotel",
+            current_price=Decimal("81.00"),
+            currency="USD",
+            availability_status="unavailable",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Spacious room for the price; clean."},
+                {"reviewer": None, "review_date": None, "comment": "Hard to find first time; good stay near beach."},
+            ],
+        ),
+        CompetitorData(
+            source="agoda_json_import",
+            search_area="Nha Trang",
+            hotel_name="Anna Belle Doi Rong Hotel",
+            current_price=Decimal("69.00"),
+            currency="USD",
+            availability_status="available",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "View from higher floors; breakfast fresh."},
+                {"reviewer": None, "review_date": None, "comment": "Slower check-in at peak hours."},
+            ],
+        ),
+        CompetitorData(
+            source="agoda_json_import",
+            search_area="Nha Trang",
+            hotel_name="Azure Pearl Nha Trang",
+            current_price=Decimal("91.00"),
             currency="USD",
             availability_status="Limited availability",
             hotel_url="https://www.agoda.com/",
             reviews=[
-                {"reviewer": "Clara", "review_date": "2026-04-13", "comment": "Nice breakfast and pool."},
+                {"reviewer": None, "review_date": None, "comment": "Pool and rooftop bar are the highlight."},
+                {"reviewer": None, "review_date": None, "comment": "Premium feel without Cam Ranh resort pricing."},
             ],
         ),
         CompetitorData(
-            source="agoda",
+            source="agoda_json_import",
             search_area="Nha Trang",
             hotel_name="Golden Wave Suites",
             current_price=Decimal("72.00"),
             currency="USD",
+            availability_status="Only 2 rooms left",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Good value; family room worked for two kids."},
+            ],
+        ),
+        CompetitorData(
+            source="agoda_json_import",
+            search_area="Nha Trang",
+            hotel_name="Seaside Pearl Hotel",
+            current_price=Decimal("78.00"),
+            currency="USD",
+            availability_status="Last rooms — selling fast",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Great beach access; helpful tour desk."},
+            ],
+        ),
+        CompetitorData(
+            source="agoda_json_import",
+            search_area="Nha Trang",
+            hotel_name="Horizon City Hotel Nha Trang",
+            current_price=Decimal("86.00"),
+            currency="USD",
+            availability_status="Limited",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Central for food and night market."},
+            ],
+        ),
+        CompetitorData(
+            source="agoda_json_import",
+            search_area="Nha Trang",
+            hotel_name="Marina Boutique Nha Trang",
+            current_price=Decimal("95.00"),
+            currency="USD",
             availability_status="Few rooms left",
             hotel_url="https://www.agoda.com/",
             reviews=[
-                {"reviewer": "David", "review_date": "2026-04-12", "comment": "Good value for money."},
+                {"reviewer": None, "review_date": None, "comment": "Personal service; excellent breakfast."},
             ],
         ),
     ]
@@ -255,9 +327,10 @@ def seed_competitor_data(db) -> None:
 
 def seed_active_demo_bookings(db, rooms: dict[str, Room]) -> None:
     samples = [
-        ("Promo Candidate 1", "promo1@example.com", "A", date(2026, 5, 2), 3, Decimal("540.00")),
-        ("Promo Candidate 2", "promo2@example.com", "D", date(2026, 5, 8), 2, Decimal("420.00")),
-        ("Promo Candidate 3", "promo3@example.com", "E", date(2026, 5, 18), 3, Decimal("390.00")),
+        ("Le Thi Mai Anh", "m.anh.le@email.com", "A", date(2026, 5, 2), 3, Decimal("540.00")),
+        ("Park Seo-jun", "sj.park@email.com", "D", date(2026, 5, 8), 2, Decimal("420.00")),
+        ("Tran Duc Minh", "minh.tran@email.com", "E", date(2026, 5, 18), 3, Decimal("390.00")),
+        ("Sarah Okafor", "s.okafor@email.com", "I", date(2026, 5, 22), 4, Decimal("1180.00")),
     ]
 
     for index, (full_name, email, room_code, check_in, nights, total_price) in enumerate(samples, start=1):
@@ -268,7 +341,7 @@ def seed_active_demo_bookings(db, rooms: dict[str, Room]) -> None:
         room = rooms.get(room_code) or next(iter(rooms.values()))
         db.add(
             Booking(
-                booking_id=f"DEMO-{index:04d}",
+                booking_id=f"ORT-2026-{index:04d}",
                 guest_id=guest.id,
                 room_id=room.id,
                 check_in=check_in,

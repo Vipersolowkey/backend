@@ -12,19 +12,10 @@ import {
   AlertsIllustration,
   OrganicLayout,
   OrganicSection,
+  OrganicStageCard,
   OrganicStatCard,
   ToneBadge,
 } from "../components/organic/OrganicUI";
-
-function StageCard({ step, title, detail }) {
-  return (
-    <article className="hover-glow grid gap-3 rounded-[32px_18px_36px_22px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.56)] p-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--earth-primary)]">Bước {step}</p>
-      <h3 className="text-[clamp(1.35rem,2vw,1.9rem)] text-[var(--earth-secondary)]">{title}</h3>
-      <p className="text-sm leading-7 text-[var(--earth-text-muted)]">{detail}</p>
-    </article>
-  );
-}
 
 export default function AlertsPage() {
   const [monthlyRevenue, setMonthlyRevenue] = useState(fallbackMonthlyRevenue);
@@ -35,21 +26,9 @@ export default function AlertsPage() {
   const [statusMessage, setStatusMessage] = useState("");
 
   const pageStages = [
-    {
-      step: "01",
-      title: "Nhìn tổng quan rủi ro",
-      detail: "Quét số booking có nguy cơ hủy và tổng revenue gap trước khi đi vào từng case.",
-    },
-    {
-      step: "02",
-      title: "Đọc từng case",
-      detail: "Xem từng booking như một ca giữ khách riêng, có đủ giá, gap và retention angle.",
-    },
-    {
-      step: "03",
-      title: "Sinh email giữ khách",
-      detail: "Chỉ khi chọn đúng case thì mới tạo promo email để tránh hành động vội.",
-    },
+    { step: "01", title: "Overview", detail: null },
+    { step: "02", title: "Detail", detail: null },
+    { step: "03", title: "Email", detail: null },
   ];
 
   useEffect(() => {
@@ -117,7 +96,7 @@ export default function AlertsPage() {
         current.map((item) => (item.bookingId === alert.bookingId ? { ...item, promoGenerated: true } : item))
       );
     } catch (error) {
-      setStatusMessage(normalizeUiErrorMessage(error, "Không thể tạo promo email lúc này."));
+      setStatusMessage(normalizeUiErrorMessage(error, "Could not generate promo email right now."));
     } finally {
       setLoadingId(null);
     }
@@ -128,34 +107,39 @@ export default function AlertsPage() {
       pageKey="alerts"
       sideArtwork={AlertsIllustration}
       hero={{
-        eyebrow: "Cảnh báo · Giữ khách",
-        title: "Một nơi để nhìn rõ booking nào đang rủi ro và giữ khách bằng hành động có chủ đích.",
-        description:
-          "Alerts được viết lại để người dùng hiểu ngay đây là màn can thiệp doanh thu: nhìn tổng quan rủi ro trước, đọc từng case sau, rồi mới sinh email giữ khách.",
+        eyebrow: null,
+        title: "Alerts",
+        description: null,
         stats: [
-          { label: "Risk Alerts", value: String(summary.total).padStart(2, "0") },
-          { label: "Revenue Gap", value: currency.format(summary.totalGap || 0) },
+          { label: "Alerts", value: String(summary.total).padStart(2, "0") },
+          { label: "Gap vs market", value: currency.format(summary.totalGap || 0) },
           { label: "Revenue", value: currency.format(monthlyRevenue.totalRevenue) },
         ],
         illustration: AlertsIllustration,
       }}
     >
-      <OrganicSection eyebrow="Quy trình" title="Tổng quan → Chi tiết → Email" description={null}>
+      <OrganicSection eyebrow={null} title="Workflow" description={null}>
         <div className="grid gap-6 lg:grid-cols-3">
-          {pageStages.map((item) => (
-            <StageCard key={item.step} step={item.step} title={item.title} detail={item.detail} />
+          {pageStages.map((item, index) => (
+            <OrganicStageCard
+              key={item.step}
+              step={item.step}
+              title={item.title}
+              detail={item.detail}
+              isLast={index === pageStages.length - 1}
+            />
           ))}
         </div>
       </OrganicSection>
 
       {promoPreview ? (
         <OrganicSection
-          eyebrow="Step 3"
-          title="Email giữ khách đã được tạo cho case đang chọn."
-          description={`Bản nháp này được sinh bằng ${promoPreview.modelUsed}. Hãy đọc lại subject và nội dung trước khi dùng thật.`}
+          eyebrow={null}
+          title="Email"
+          description={null}
           action={
             <button type="button" onClick={() => setPromoPreview(null)} className="px-4 py-3 text-sm font-semibold">
-              Đóng preview
+              Close preview
             </button>
           }
         >
@@ -172,30 +156,28 @@ export default function AlertsPage() {
         </OrganicSection>
       ) : null}
 
-      <OrganicSection eyebrow="Tổng quan" title="Rủi ro & khoảng chênh" description={null}
+      <OrganicSection eyebrow={null} title="Overview" description={null}
         action={
           <input
             value={alertSearch}
             onChange={(event) => setAlertSearch(event.target.value)}
-            placeholder="Tìm booking hoặc guest..."
+            placeholder="Search booking or guest..."
             className="px-4 py-3 text-sm"
           />
         }
       >
         <div className="grid gap-6 lg:grid-cols-4">
-          <OrganicStatCard label="High Risk" value={summary.total} hint="Số booking đang cần retention action." />
-          <OrganicStatCard label="Revenue Gap" value={currency.format(summary.totalGap || 0)} hint="Khoảng chênh so với benchmark đối thủ." />
-          <OrganicStatCard label="Generated Offers" value={summary.generated} hint="Số case đã có email giữ khách." />
+          <OrganicStatCard label="High-risk" value={summary.total} />
+          <OrganicStatCard label="Price gap" value={currency.format(summary.totalGap || 0)} />
+          <OrganicStatCard label="Offers sent" value={summary.generated} />
           <article className="rounded-[24px_36px_20px_34px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.54)] p-5">
-            <h3 className="text-[clamp(1.4rem,2vw,2rem)] text-[var(--earth-secondary)]">Tình trạng hiện tại</h3>
-            <p className="mt-4 text-sm leading-7 text-[var(--earth-text)]">
-              {statusMessage || "Chưa có cập nhật. Chọn booking bên dưới để tạo email giữ khách."}
-            </p>
+            <h3 className="text-[clamp(1.4rem,2vw,2rem)] text-[var(--earth-secondary)]">Status</h3>
+            <p className="mt-4 text-sm leading-7 text-[var(--earth-text)]">{statusMessage || "—"}</p>
           </article>
         </div>
       </OrganicSection>
 
-      <OrganicSection eyebrow="Booking" title="Danh sách cần xử lý" description={null}>
+      <OrganicSection eyebrow={null} title="Booking" description={null}>
         <div className="grid gap-6">
           {filteredAlerts.map((alert) => {
             const gap = alert.competitorPrice ? alert.bookedPrice - alert.competitorPrice : 0;
@@ -217,23 +199,17 @@ export default function AlertsPage() {
                       {alert.roomType} · {alert.stayDates}
                     </p>
                   </div>
-                  <p className="rounded-[26px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.5)] p-4 text-sm leading-7 text-[var(--earth-text)]">
-                    Đối thủ đang rẻ hơn khoảng {currency.format(gap)} cho một kỳ lưu trú tương tự. Hướng xử lý nên là thêm value và giảm friction trước, chỉ giảm giá khi thật sự cần để chốt.
-                  </p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-1">
-                  <OrganicStatCard label="Booked Price" value={currency.format(alert.bookedPrice)} hint="Giá booking hiện tại." />
-                  <OrganicStatCard label="Competitor Price" value={alert.competitorPrice ? currency.format(alert.competitorPrice) : "N/A"} hint="Mức giá ngoài thị trường." />
-                  <OrganicStatCard label="Recovery Potential" value={currency.format(gap)} hint="Khoảng chênh đang cần giữ lại." />
+                  <OrganicStatCard label="Booked rate" value={currency.format(alert.bookedPrice)} />
+                  <OrganicStatCard label="Benchmark" value={alert.competitorPrice ? currency.format(alert.competitorPrice) : "—"} />
+                  <OrganicStatCard label="Delta" value={currency.format(gap)} />
                 </div>
 
                 <div className="flex flex-col justify-center gap-3 xl:min-w-[220px]">
                   <button type="button" onClick={() => handleGenerate(alert)} disabled={loadingId === alert.bookingId} className="px-5 py-3 text-sm font-semibold">
-                    {loadingId === alert.bookingId ? "Đang tạo email..." : alert.promoGenerated ? "Tạo lại email" : "Tạo email giữ khách"}
-                  </button>
-                  <button type="button" onClick={() => setPromoPreview(null)} className="px-5 py-3 text-sm font-semibold">
-                    Xóa preview
+                    {loadingId === alert.bookingId ? "Generating email..." : alert.promoGenerated ? "Regenerate email" : "Generate retention email"}
                   </button>
                 </div>
               </article>

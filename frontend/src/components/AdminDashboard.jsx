@@ -13,23 +13,43 @@ const fallbackMonthlyRevenue = {
 
 const fallbackAlerts = [
   {
-    bookingId: "DEMO-0001",
-    guestName: "Promo Candidate 1",
-    email: "promo1@example.com",
-    roomType: "Room Type A",
+    bookingId: "ORT-2026-0001",
+    guestName: "Le Thi Mai Anh",
+    email: "m.anh.le@email.com",
+    roomType: "Classic Room",
     stayDates: "2026-05-02 to 2026-05-05",
     bookedPrice: 540,
-    competitorPrice: 78.33,
+    competitorPrice: 80.5,
     risk: "HIGH",
   },
   {
-    bookingId: "DEMO-0002",
-    guestName: "Promo Candidate 2",
-    email: "promo2@example.com",
-    roomType: "Room Type D",
+    bookingId: "ORT-2026-0002",
+    guestName: "Park Seo-jun",
+    email: "sj.park@email.com",
+    roomType: "Deluxe Room",
     stayDates: "2026-05-08 to 2026-05-10",
     bookedPrice: 420,
-    competitorPrice: 78.33,
+    competitorPrice: 80.5,
+    risk: "HIGH",
+  },
+  {
+    bookingId: "ORT-2026-0003",
+    guestName: "Tran Duc Minh",
+    email: "minh.tran@email.com",
+    roomType: "Family Room",
+    stayDates: "2026-05-18 to 2026-05-21",
+    bookedPrice: 390,
+    competitorPrice: 80.5,
+    risk: "HIGH",
+  },
+  {
+    bookingId: "ORT-2026-0004",
+    guestName: "Sarah Okafor",
+    email: "s.okafor@email.com",
+    roomType: "Signature Room",
+    stayDates: "2026-05-22 to 2026-05-26",
+    bookedPrice: 1180,
+    competitorPrice: 80.5,
     risk: "HIGH",
   },
 ];
@@ -38,22 +58,22 @@ const fallbackInsight = {
   area_name: "Nha Trang",
   source: "agoda_json_import",
   hotels_analyzed: 8,
-  reviews_analyzed: 19,
+  reviews_analyzed: 26,
   praise_points: [
-    "Nice view and scenery",
-    "Breakfast quality",
-    "Clean rooms and hygiene",
-    "Good location and accessibility",
-    "Friendly and helpful staff",
+    "Sea view and rooftop pool experiences",
+    "Breakfast variety and local flavors",
+    "Clean rooms and proactive housekeeping",
+    "Walkable beach and night-market access",
+    "Family layouts and value-led suites",
   ],
   complaint_points: [
-    "Small room size",
-    "Old facilities or outdated rooms",
-    "Cleanliness concerns",
-    "General service complaints",
+    "Compact rooms in central towers",
+    "Peak-hour check-in queues",
+    "Street noise on lower floors",
+    "Aging hardware in some mid-tier listings",
   ],
   strategic_summary:
-    "Competitors win on view, breakfast, and location, but guests still complain about room size, aging facilities, and inconsistent cleanliness.",
+    "The Nha Trang set clusters around USD 69–95 with several properties showing tight inventory; guests reward beach access and breakfast, while check-in friction and noise remain the main attack surface for differentiation.",
   model_used: "heuristic_fallback",
 };
 
@@ -63,10 +83,10 @@ const fallbackHotels = [
     hotel_name: "Truong Hai Hotel",
     search_area: "Nha Trang",
     availability_status: "unavailable",
-    current_price: null,
-    currency: null,
+    current_price: 81,
+    currency: "USD",
     hotel_url: "https://www.agoda.com/",
-    review_count: 5,
+    review_count: 1205,
     reviews: [
       {
         comment: "Room is very spacious for the price and it was clean.",
@@ -81,17 +101,154 @@ const fallbackHotels = [
     ],
   },
   {
-    source: "booking_json_import",
+    source: "agoda_json_import",
+    hotel_name: "Coral Bay Residence Nha Trang",
+    search_area: "Nha Trang",
+    availability_status: "Few rooms left at this price",
+    current_price: 74,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 842,
+    reviews: [
+      {
+        comment: "Quiet floor and strong air conditioning; beach is a short walk.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Good value for a sea-view room compared to bigger chains nearby.",
+        reviewer: null,
+        review_date: null,
+      },
+    ],
+  },
+  {
+    source: "agoda_json_import",
     hotel_name: "Anna Belle Doi Rong Hotel",
     search_area: "Nha Trang",
     availability_status: "available",
-    current_price: null,
-    currency: null,
-    hotel_url: "https://www.booking.com/",
-    review_count: 3,
+    current_price: 69,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 356,
     reviews: [
       {
-        comment: "Guests like the view, but some mention service inconsistency.",
+        comment: "Guests like the view from higher floors; breakfast is simple but fresh.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Some mention slower check-in during peak hours.",
+        reviewer: null,
+        review_date: null,
+      },
+    ],
+  },
+  {
+    source: "agoda_json_import",
+    hotel_name: "Azure Pearl Nha Trang",
+    search_area: "Nha Trang",
+    availability_status: "Limited availability",
+    current_price: 91,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 2104,
+    reviews: [
+      {
+        comment: "Pool and rooftop bar are the highlight; staff remembered our anniversary.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Premium feel without the resort price tag of Cam Ranh properties.",
+        reviewer: null,
+        review_date: null,
+      },
+    ],
+  },
+  {
+    source: "agoda_json_import",
+    hotel_name: "Golden Wave Suites",
+    search_area: "Nha Trang",
+    availability_status: "Only 2 rooms left",
+    current_price: 72,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 678,
+    reviews: [
+      {
+        comment: "Good value for money; family room layout worked well for two kids.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Elevator wait times during breakfast rush.",
+        reviewer: null,
+        review_date: null,
+      },
+    ],
+  },
+  {
+    source: "agoda_json_import",
+    hotel_name: "Seaside Pearl Hotel",
+    search_area: "Nha Trang",
+    availability_status: "Last rooms — selling fast",
+    current_price: 78,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 1540,
+    reviews: [
+      {
+        comment: "Great beach access and helpful front desk for tour bookings.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Clean rooms; ask for a high floor to avoid street noise.",
+        reviewer: null,
+        review_date: null,
+      },
+    ],
+  },
+  {
+    source: "agoda_json_import",
+    hotel_name: "Horizon City Hotel Nha Trang",
+    search_area: "Nha Trang",
+    availability_status: "Limited",
+    current_price: 86,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 923,
+    reviews: [
+      {
+        comment: "Central location for food and night market; rooms compact but modern.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Housekeeping was thorough every day.",
+        reviewer: null,
+        review_date: null,
+      },
+    ],
+  },
+  {
+    source: "agoda_json_import",
+    hotel_name: "Marina Boutique Nha Trang",
+    search_area: "Nha Trang",
+    availability_status: "Few rooms left",
+    current_price: 95,
+    currency: "USD",
+    hotel_url: "https://www.agoda.com/",
+    review_count: 412,
+    reviews: [
+      {
+        comment: "Small property but very personal service; excellent breakfast selection.",
+        reviewer: null,
+        review_date: null,
+      },
+      {
+        comment: "Higher rate than neighbors but felt worth it for a special trip.",
         reviewer: null,
         review_date: null,
       },
@@ -132,12 +289,17 @@ const fallbackHotelIntelligence = {
 
 const fallbackGuestAdvisor = {
   summary:
-    "Recommend a mid-tier room with a value-led package and position the stay around cleaner execution, smoother arrival, and dependable support.",
+    "Anchor on Deluxe or Signature depending on length of stay and origin market; lead with airport-to-room flow and F&B bundles before discussing rate flex.",
   recommended_room_type: "Deluxe Room",
-  recommended_price_anchor: "$145 per night",
-  upsell_items: ["Breakfast add-on", "Airport transfer", "Late checkout"],
+  recommended_price_anchor: "$168 per night",
+  upsell_items: [
+    "Half-board or breakfast-inclusive package",
+    "Private Cam Ranh airport transfer",
+    "Late checkout + luggage hold",
+    "One-time room upgrade to Signature on 3+ nights",
+  ],
   sales_script:
-    "For your stay, I would recommend our Deluxe Room because it gives better comfort without jumping too far on price. We can also bundle breakfast and late checkout so the overall value feels stronger than a room-only rate elsewhere.",
+    "For a multi-night coastal stay I would start with our Deluxe category for space and quiet floors, then add breakfast and transfer so the trip feels turnkey. If the guest is celebrating or staying four nights or more, Signature adds the view and lounge-style service without jumping straight to the top published rate.",
   objection_handling: [
     "If the guest says another hotel is cheaper, reposition around service reliability and cleaner execution.",
     "If the guest is unsure, offer one bundled perk before using a room discount.",
@@ -156,23 +318,27 @@ const fallbackGuestAdvisor = {
 };
 
 const fallbackLeadScore = {
-  lead_score: 76,
+  lead_score: 81,
   lead_temperature: "WARM",
-  buyer_type: "balanced_value_buyer",
-  close_probability: "Medium",
-  upsell_priority: "Balanced",
+  buyer_type: "experience_led_leisure",
+  close_probability: "Medium-High",
+  upsell_priority: "F&B and logistics first",
   buying_signals: [
-    "Guest mentions concrete stay needs",
-    "Budget is still workable for a mid-tier room",
-    "Multi-night stay increases value potential",
+    "International mix with weekend-heavy arrival pattern",
+    "Stays spanning four nights show willingness to invest in comfort",
+    "Classic vs Signature spread implies trade-up room if perks are clear",
   ],
-  blockers: ["Still comparing nearby rates"],
-  recommended_upsells: ["Breakfast add-on", "Airport transfer", "Late checkout"],
+  blockers: ["Cross-shopping OTAs in the USD 70–95 band"],
+  recommended_upsells: [
+    "Half-board or breakfast-inclusive package",
+    "Private Cam Ranh airport transfer",
+    "Late checkout + luggage hold",
+  ],
   model_used: "heuristic_fallback",
 };
 
 const fallbackPlaybook = {
-  buyer_type: "balanced_value_buyer",
+  buyer_type: "experience_led_leisure",
   journey_stage: "considering_options",
   opening_script:
     "I would recommend our Deluxe Room because it balances comfort and value better than simply chasing the cheapest nearby rate.",
@@ -204,8 +370,7 @@ const fallbackPlaybook = {
 const fallbackChatMessages = [
   {
     role: "assistant",
-    content:
-      "Hello, I can help recommend the right room, build a package, and answer guest objections like a reservation agent.",
+    content: "Chào anh/chị — em có thể gợi ý phòng, gói và cách xử lý khi khách so giá.",
   },
 ];
 
@@ -1746,13 +1911,7 @@ export default function AdminDashboard({ initialPage = "overview" }) {
       if (playbookResult.status === "fulfilled" && playbookResult.value.ok) {
         const playbookPayload = await playbookResult.value.json();
         setConversionPlaybook(playbookPayload);
-        setGuestChatMessages([
-          fallbackChatMessages[0],
-          {
-            role: "assistant",
-            content: playbookPayload.opening_script,
-          },
-        ]);
+        setGuestChatMessages([{ role: "assistant", content: playbookPayload.opening_script }]);
         setGuestChatMeta((current) => ({
           ...current,
           suggested_next_step: playbookPayload.follow_up_cadence,

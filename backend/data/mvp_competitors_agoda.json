@@ -1,0 +1,212 @@
+[
+  {
+    "title": "Coral Bay Residence Nha Trang",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 74, "currency": "USD" },
+    "availability": "Few rooms left at this price",
+    "review_score": 8.6,
+    "number_of_reviews": 842,
+    "rooms_available": 4,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Quiet floor and strong air conditioning; beach is a short walk.",
+      "Good value for a sea-view room compared to bigger chains nearby."
+    ]
+  },
+  {
+    "title": "Truong Hai Hotel",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 81, "currency": "USD" },
+    "availability": false,
+    "review_score": 7.9,
+    "number_of_reviews": 1205,
+    "rooms_available": 0,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Room is spacious for the price and it was clean.",
+      "Hard to find the first time, but overall a good stay near the beach."
+    ]
+  },
+  {
+    "title": "Anna Belle Doi Rong Hotel",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 69, "currency": "USD" },
+    "availability": true,
+    "review_score": 8.1,
+    "number_of_reviews": 356,
+    "rooms_available": 12,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Guests like the view from higher floors; breakfast is simple but fresh.",
+      "Some mention slower check-in during peak hours."
+    ]
+  },
+  {
+    "title": "Azure Pearl Nha Trang",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 91, "currency": "USD" },
+    "availability": "Limited availability",
+    "review_score": 8.8,
+    "number_of_reviews": 2104,
+    "rooms_available": 2,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Pool and rooftop bar are the highlight; staff remembered our anniversary.",
+      "Premium feel without the resort price tag of Cam Ranh properties."
+    ]
+  },
+  {
+    "title": "Golden Wave Suites",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 72, "currency": "USD" },
+    "availability": "Only 2 rooms left",
+    "review_score": 8.2,
+    "number_of_reviews": 678,
+    "rooms_available": 2,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Good value for money; family room layout worked well for two kids.",
+      "Elevator wait times during breakfast rush."
+    ]
+  },
+  {
+    "title": "Seaside Pearl Hotel",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 78, "currency": "USD" },
+    "availability": "Last rooms — selling fast",
+    "review_score": 8.4,
+    "number_of_reviews": 1540,
+    "rooms_available": 3,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Great beach access and helpful front desk for tour bookings.",
+      "Clean rooms; ask for a high floor to avoid street noise."
+    ]
+  },
+  {
+    "title": "Horizon City Hotel Nha Trang",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 86, "currency": "USD" },
+    "availability": "Limited",
+    "review_score": 8.0,
+    "number_of_reviews": 923,
+    "rooms_available": 5,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Central location for food and night market; rooms compact but modern.",
+      "Housekeeping was thorough every day."
+    ]
+  },
+  {
+    "title": "Marina Boutique Nha Trang",
+    "city": "Nha Trang",
+    "country": "Vietnam",
+    "price": { "value": 95, "currency": "USD" },
+    "availability": "Few rooms left",
+    "review_score": 9.0,
+    "number_of_reviews": 412,
+    "rooms_available": 2,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Small property but very personal service; excellent breakfast selection.",
+      "Higher rate than neighbors but felt worth it for a special trip."
+    ]
+  },
+  {
+    "title": "Hoan Kiem City Hotel",
+    "city": "Hanoi",
+    "country": "Vietnam",
+    "price": { "value": 112, "currency": "USD" },
+    "availability": "Limited availability",
+    "review_score": 8.3,
+    "number_of_reviews": 1890,
+    "rooms_available": 6,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Walkable to the lake and old quarter; compact but spotless rooms.",
+      "Street-facing rooms can be noisy — request interior wing."
+    ]
+  },
+  {
+    "title": "West Lake Boutique Hanoi",
+    "city": "Hanoi",
+    "country": "Vietnam",
+    "price": { "value": 138, "currency": "USD" },
+    "availability": "Few rooms left",
+    "review_score": 8.9,
+    "number_of_reviews": 445,
+    "rooms_available": 2,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Calm lake views and slower pace than the old quarter core.",
+      "Excellent coffee and small-plate breakfast."
+    ]
+  },
+  {
+    "title": "Noi Bai Express Inn",
+    "city": "Hanoi",
+    "country": "Vietnam",
+    "price": { "value": 62, "currency": "USD" },
+    "availability": true,
+    "review_score": 7.6,
+    "number_of_reviews": 2103,
+    "rooms_available": 40,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Fine for one night before a flight; shuttle timing is reliable.",
+      "Basic rooms — manage expectations vs central Hanoi hotels."
+    ]
+  },
+  {
+    "title": "My Khe Beach Tower Da Nang",
+    "city": "Da Nang",
+    "country": "Vietnam",
+    "price": { "value": 104, "currency": "USD" },
+    "availability": "Only 3 rooms left",
+    "review_score": 8.5,
+    "number_of_reviews": 3320,
+    "rooms_available": 3,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Direct beach crossing; sunrise from balcony was worth it.",
+      "Pool deck gets crowded midday — go early."
+    ]
+  },
+  {
+    "title": "Han River Executive Da Nang",
+    "city": "Da Nang",
+    "country": "Vietnam",
+    "price": { "value": 96, "currency": "USD" },
+    "availability": "available",
+    "review_score": 8.2,
+    "number_of_reviews": 876,
+    "rooms_available": 14,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "River view at night is excellent; gym is small but usable.",
+      "Good base between airport and Hoi An day trips."
+    ]
+  },
+  {
+    "title": "Marble Mountains View Lodge",
+    "city": "Da Nang",
+    "country": "Vietnam",
+    "price": { "value": 71, "currency": "USD" },
+    "availability": true,
+    "review_score": 8.0,
+    "number_of_reviews": 512,
+    "rooms_available": 9,
+    "url": "https://www.agoda.com/",
+    "top_reviews": [
+      "Budget-friendly with honest photos; staff helped book Marble Mountain tickets.",
+      "Not on the sand — use grab to the beach strip."
+    ]
+  }
+]

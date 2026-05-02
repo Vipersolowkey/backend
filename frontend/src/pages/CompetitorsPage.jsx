@@ -28,8 +28,8 @@ import {
 } from "../components/organic/OrganicUI";
 
 function availabilityLabel(status) {
-  if (status === "available") return "Còn phòng";
-  if (status === "unavailable") return "Không còn phòng";
+  if (status === "available") return "Available";
+  if (status === "unavailable") return "Unavailable";
   return formatEnumLabel(status || "unknown");
 }
 
@@ -38,7 +38,7 @@ function HotelCard({ hotel, onOpen }) {
     hotel.current_price != null && hotel.current_price !== "" && !Number.isNaN(Number(hotel.current_price));
   const priceLine = hasPrice
     ? `${hotel.currency?.trim() || "$"} ${hotel.current_price}`.trim()
-    : "Chưa có giá công khai trên OTA";
+    : "No public OTA rate";
 
   return (
     <article className="hover-glow grid min-w-0 gap-4 rounded-[32px_18px_38px_20px] border border-[rgba(30,42,36,0.1)] bg-[rgba(255,255,255,0.72)] p-5 shadow-[0_8px_28px_rgba(30,42,36,0.06)]">
@@ -50,7 +50,7 @@ function HotelCard({ hotel, onOpen }) {
           </ToneBadge>
         </div>
         <p className="shrink-0 text-sm font-medium tabular-nums text-[var(--earth-text-subtle)]">
-          {hotel.review_count} đánh giá
+          {hotel.review_count} reviews
         </p>
       </div>
 
@@ -61,12 +61,12 @@ function HotelCard({ hotel, onOpen }) {
 
       <div className="min-w-0 space-y-3 border-t border-[rgba(30,42,36,0.08)] pt-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--earth-text-subtle)]">Giá OTA (snapshot)</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--earth-text-subtle)]">OTA rate (snapshot)</p>
           <p className="mt-1 break-normal text-base font-semibold leading-snug text-[var(--earth-text)]">{priceLine}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => onOpen(hotel)} className="shrink-0 px-4 py-2.5 text-sm font-semibold">
-            Xem sâu hơn
+            View detail
           </button>
           {hotel.hotel_url ? (
             <a
@@ -75,7 +75,7 @@ function HotelCard({ hotel, onOpen }) {
               rel="noreferrer"
               className="inline-flex shrink-0 items-center justify-center rounded-[22px] border border-[rgba(30,42,36,0.14)] px-4 py-2.5 text-sm font-semibold text-[var(--earth-secondary)] no-underline"
             >
-              Mở listing
+              Open listing
             </a>
           ) : null}
         </div>
@@ -229,7 +229,7 @@ export default function CompetitorsPage() {
         } else if (event.type === "error") {
           const errorMessage = normalizeStreamProviderError(
             event,
-            "Competitor chat hiện chưa trả lời được. Kiểm tra log backend để biết chi tiết."
+            "Competitor chat unavailable. Check backend logs for details."
           );
           setChatMeta((current) => ({ ...current, model_used: "provider_error" }));
           setChatMessages((current) => {
@@ -255,7 +255,7 @@ export default function CompetitorsPage() {
     } catch (error) {
       const errorMessage = normalizeUiErrorMessage(
         error,
-        "Không stream được phản hồi từ AI competitor. Kiểm tra log backend để biết chi tiết."
+        "Could not stream competitor AI response. Check backend logs for details."
       );
       setChatMessages((current) => [
         ...current.filter((item, index, array) => !(index === array.length - 1 && item.role === "assistant" && !item.content)),
@@ -271,21 +271,20 @@ export default function CompetitorsPage() {
       pageKey="competitors"
       sideArtwork={CompetitorsIllustration}
       hero={{
-        eyebrow: "Đối thủ",
-        title: "Theo dõi thị trường và chọn đúng đối thủ để hành động.",
-        description:
-          "Tổng hợp nguồn Agoda/Booking, tình trạng phòng, điểm nhấn từ review — rồi mở chi tiết hoặc hỏi trợ lý AI khi cần.",
+        eyebrow: null,
+        title: "Competitors",
+        description: null,
         stats: [
-          { label: "Đang theo dõi", value: String(snapshot.total).padStart(2, "0") },
-          { label: "Còn phòng", value: String(snapshot.available).padStart(2, "0") },
-          { label: "Nguồn mạnh", value: snapshot.leader },
+          { label: "Tracked", value: String(snapshot.total).padStart(2, "0") },
+          { label: "Available", value: String(snapshot.available).padStart(2, "0") },
+          { label: "Top source", value: snapshot.leader },
         ],
         illustration: CompetitorsIllustration,
       }}
     >
       <OrganicSection
-        eyebrow="Thị trường"
-        title="Tổng quan theo khu vực"
+        eyebrow={null}
+        title="By area"
         description={null}
         action={
           <div className="flex flex-wrap gap-3">
@@ -303,20 +302,20 @@ export default function CompetitorsPage() {
                 </option>
               ))}
             </select>
-            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm tên khách sạn..." className="px-4 py-3 text-sm" />
+            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search hotels..." className="px-4 py-3 text-sm" />
           </div>
         }
       >
         <div className="grid gap-6 lg:grid-cols-4">
-          <OrganicStatCard label="Hotels" value={snapshot.total} hint="Số property đang nằm trong scope hiện tại." />
-          <OrganicStatCard label="Availability" value={snapshot.available} hint="Số đối thủ vẫn còn inventory hiển thị." />
-          <OrganicStatCard label="Source Leader" value={snapshot.leader} hint="Nguồn đang chiếm tỷ trọng lớn hơn." />
+          <OrganicStatCard label="Hotels" value={snapshot.total} />
+          <OrganicStatCard label="Available" value={snapshot.available} />
+          <OrganicStatCard label="Source" value={snapshot.leader} />
           <article className="rounded-[22px_34px_24px_38px] border border-[rgba(30,42,36,0.1)] bg-[rgba(255,255,255,0.72)] p-6 shadow-[0_8px_28px_rgba(30,42,36,0.05)] lg:col-span-4">
             <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-[rgba(30,42,36,0.08)] pb-4">
               <h3 className="font-['Fraunces',serif] text-[clamp(1.35rem,2.2vw,1.85rem)] font-semibold tracking-tight text-[var(--earth-secondary)]">
-                Tóm tắt chiến lược
+                Strategic summary
               </h3>
-              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--earth-text-subtle)]">Theo review thị trường</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--earth-text-subtle)]">From market reviews</span>
             </div>
             <ReadableInsightBody text={insight.strategic_summary} modelUsed={insight.model_used} className="mt-5" />
           </article>
@@ -340,11 +339,7 @@ export default function CompetitorsPage() {
       </OrganicSection>
 
       <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
-        <OrganicSection
-          eyebrow="Danh sách theo dõi"
-          title="Watchlist"
-          description={null}
-        >
+        <OrganicSection eyebrow={null} title="Watchlist" description={null}>
           <div className="grid min-w-0 gap-6 xl:grid-cols-2">
             {loadingHotels
               ? Array.from({ length: 4 }).map((_, index) => (
@@ -356,11 +351,7 @@ export default function CompetitorsPage() {
           </div>
         </OrganicSection>
 
-        <OrganicSection
-          eyebrow="Chi tiết"
-          title={selectedHotel?.hotel?.hotel_name || "Chọn một khách sạn"}
-          description={null}
-        >
+        <OrganicSection eyebrow={null} title={selectedHotel?.hotel?.hotel_name || "Detail"} description={null}>
           <div className="grid gap-5">
             <div className="flex flex-wrap gap-2">
               {(selectedHotel?.strengths || []).map((item) => (
@@ -372,7 +363,7 @@ export default function CompetitorsPage() {
             <ReadableInsightBody text={selectedHotel?.executive_summary} className="rounded-[20px] border border-[rgba(30,42,36,0.06)] bg-[rgba(255,255,255,0.55)] p-4" />
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-[28px] border border-[rgba(196,113,74,0.2)] bg-[rgba(196,113,74,0.08)] p-5">
-                <h3 className="text-[clamp(1.3rem,2vw,1.8rem)] text-[var(--earth-secondary)]">Điểm yếu dễ khai thác</h3>
+                <h3 className="text-[clamp(1.3rem,2vw,1.8rem)] text-[var(--earth-secondary)]">Exploitable weaknesses</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(selectedHotel?.weaknesses || []).map((item) => (
                     <ToneBadge key={item} tone="complaint">
@@ -382,7 +373,7 @@ export default function CompetitorsPage() {
                 </div>
               </div>
               <div className="rounded-[28px] border border-[rgba(143,175,143,0.2)] bg-[rgba(143,175,143,0.08)] p-5">
-                <h3 className="text-[clamp(1.3rem,2vw,1.8rem)] text-[var(--earth-secondary)]">Góc nên dùng</h3>
+                <h3 className="text-[clamp(1.3rem,2vw,1.8rem)] text-[var(--earth-secondary)]">Angles to use</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(selectedHotel?.marketing_hooks || []).map((item) => (
                     <ToneBadge key={item} tone="neutral">
@@ -393,7 +384,7 @@ export default function CompetitorsPage() {
               </div>
             </div>
             <div className="rounded-[26px] border border-[rgba(30,42,36,0.08)] bg-[rgba(255,255,255,0.6)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--earth-text-subtle)]">Định vị giá</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--earth-text-subtle)]">Pricing posture</p>
               <div className="mt-2">
                 <ReadableInsightBody text={selectedHotel?.pricing_posture} />
               </div>
@@ -402,12 +393,9 @@ export default function CompetitorsPage() {
         </OrganicSection>
       </section>
 
-      <OrganicSection eyebrow="Trợ lý" title="Chat phân tích đối thủ" description={null}>
+      <OrganicSection eyebrow={null} title="Chat" description={null}>
         <div className="organic-chat-stack grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <article className="grid gap-4 rounded-[36px_18px_38px_20px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.54)] p-6">
-            <div className="rounded-[24px] border border-[rgba(30,42,36,0.1)] bg-[rgba(255,255,255,0.75)] p-4 text-sm leading-7 text-[var(--earth-text-subtle)]">
-              Gợi ý: so sánh điểm yếu dịch vụ, góc giữ giá, hoặc đối thủ đáng theo dõi nhất trong tuần.
-            </div>
             <div className="max-h-[460px] space-y-3 overflow-y-auto pr-2">
               {chatMessages.map((message, index) => (
                 <div
@@ -424,7 +412,7 @@ export default function CompetitorsPage() {
               {loadingChat ? (
                 <div className="mr-8 rounded-[28px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.44)] px-4 py-4 text-sm text-[var(--earth-secondary)]">
                   <span className="typing-dots">
-                    Analyst đang đọc tín hiệu thị trường<span>.</span><span>.</span><span>.</span>
+                    Replying<span>.</span><span>.</span><span>.</span>
                   </span>
                 </div>
               ) : null}
@@ -434,19 +422,19 @@ export default function CompetitorsPage() {
                 rows={3}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ví dụ: Nếu chỉ được chọn một đối thủ để theo dõi kỹ trong tuần này thì nên chọn ai?"
+                placeholder="Message…"
                 className="min-h-[92px] flex-1 px-4 py-3 leading-7"
               />
               <button type="button" onClick={sendChat} disabled={loadingChat || !chatInput.trim()} className="self-end px-5 py-3 text-sm font-semibold">
-                Hỏi analyst
+                Send
               </button>
             </div>
           </article>
 
           <div className="grid gap-4">
-            <OrganicStatCard label="Area" value={chatMeta.area_name} hint="Khu vực đang được phân tích." />
-            <OrganicStatCard label="Hotels In Context" value={chatMeta.hotels_analyzed || snapshot.total} hint="Số hotel đang làm nền cho câu trả lời." />
-            <OrganicStatCard label="Model" value={chatMeta.model_used} hint="Nếu provider lỗi, thông tin lỗi sẽ hiện ngay trong chat." />
+            <OrganicStatCard label="Area" value={chatMeta.area_name} />
+            <OrganicStatCard label="Hotels" value={chatMeta.hotels_analyzed || snapshot.total} />
+            <OrganicStatCard label="Model" value={chatMeta.model_used} />
           </div>
         </div>
       </OrganicSection>

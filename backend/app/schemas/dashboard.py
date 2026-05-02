@@ -22,6 +22,18 @@ class CancellationAlert(BaseModel):
     risk: str
 
 
+class OperationalPriority(BaseModel):
+    """Structured insight + suggested action for ops / GM view."""
+
+    category: str
+    severity: str
+    title: str
+    detail: str
+    suggested_action: str
+    route_hint: str | None = None
+
+
 class DashboardResponse(BaseModel):
     monthly_revenue: MonthlyRevenueCard
     alerts: list[CancellationAlert]
+    priorities: list[OperationalPriority]

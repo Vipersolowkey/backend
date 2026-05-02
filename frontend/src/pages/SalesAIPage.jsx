@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   buildGuestRequest,
@@ -26,9 +26,9 @@ import {
 function StageCard({ step, title, detail }) {
   return (
     <article className="hover-glow grid gap-3 rounded-[32px_18px_36px_22px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.56)] p-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--earth-primary)]">Bước {step}</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--earth-primary)]">Step {step}</p>
       <h3 className="text-[clamp(1.35rem,2vw,1.9rem)] text-[var(--earth-secondary)]">{title}</h3>
-      <p className="text-sm leading-7 text-[var(--earth-text-muted)]">{detail}</p>
+      {detail ? <p className="text-sm leading-7 text-[var(--earth-text-muted)]">{detail}</p> : null}
     </article>
   );
 }
@@ -38,7 +38,8 @@ export default function SalesAIPage() {
     areaName: "Nha Trang",
     source: "",
     customerName: "",
-    customerMessage: "Tôi muốn một phòng sạch, gần biển, dịch vụ ổn và giá hợp lý cho 2 người trong 2 đêm.",
+    customerMessage:
+      "Looking for a clean room near the beach, reliable service, and fair pricing for 2 guests for 2 nights.",
     partySize: 2,
     nights: 2,
     budget: 320,
@@ -50,7 +51,7 @@ export default function SalesAIPage() {
   const [messages, setMessages] = useState(fallbackChatMessages);
   const [chatInput, setChatInput] = useState("");
   const [chatMeta, setChatMeta] = useState({
-    suggested_next_step: "Xác nhận khách đang ưu tiên giá, không gian hay cảm giác ở ổn định hơn.",
+    suggested_next_step: "",
     playbook_stage: "considering_options",
     upsell_focus: "Breakfast add-on",
     lead_temperature: "WARM",
@@ -60,28 +61,10 @@ export default function SalesAIPage() {
   const [loadingChat, setLoadingChat] = useState(false);
 
   const workflowSteps = [
-    {
-      step: "01",
-      title: "Nhập brief khách",
-      detail: "Gom đúng nhu cầu, số khách, số đêm và mức chi trước khi để AI đề xuất.",
-    },
-    {
-      step: "02",
-      title: "Đọc offer đề xuất",
-      detail: "Xem hạng phòng, lý do phù hợp, perks nên thêm và hướng nói chuyện nên bám vào.",
-    },
-    {
-      step: "03",
-      title: "Chat xử lý objection",
-      detail: "Chỉ dùng chat khi đã có offer, để câu trả lời đi thẳng vào chuyện chốt khách.",
-    },
+    { step: "01", title: "Brief", detail: null },
+    { step: "02", title: "Recommendation", detail: null },
+    { step: "03", title: "Chat", detail: null },
   ];
-
-  const urgencyNote = useMemo(() => {
-    if (leadScore.lead_temperature === "HOT") return "Nóng: nên chốt ngay trong một nhịp nói chuyện.";
-    if (leadScore.lead_temperature === "WARM") return "Ấm: hợp với cách chốt mềm, thêm perk trước rồi mới ép close.";
-    return "Lạnh: nên giữ nhịp tư vấn nhẹ và tăng độ tin tưởng trước.";
-  }, [leadScore.lead_temperature]);
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -101,10 +84,7 @@ export default function SalesAIPage() {
       setAdvisor(advisorData);
       setLeadScore(leadData);
       setPlaybook(playbookData);
-      setMessages([
-        fallbackChatMessages[0],
-        { role: "assistant", content: playbookData.opening_script },
-      ]);
+      setMessages([{ role: "assistant", content: playbookData.opening_script }]);
       setChatMeta((current) => ({
         ...current,
         suggested_next_step: playbookData.follow_up_cadence,
@@ -152,7 +132,7 @@ export default function SalesAIPage() {
         } else if (event.type === "error") {
           const errorMessage = normalizeStreamProviderError(
             event,
-            "AI chat hiện chưa trả lời được. Kiểm tra log backend để biết chi tiết."
+            "AI chat unavailable. Check backend logs for details."
           );
           setChatMeta((current) => ({ ...current, model_used: "provider_error" }));
           setMessages((current) => {
@@ -178,7 +158,7 @@ export default function SalesAIPage() {
     } catch (error) {
       const errorMessage = normalizeUiErrorMessage(
         error,
-        "Không stream được phản hồi từ AI. Kiểm tra log backend để biết chi tiết."
+        "Could not stream AI response. Check backend logs for details."
       );
       setMessages((current) => [
         ...current.filter((item, index, array) => !(index === array.length - 1 && item.role === "assistant" && !item.content)),
@@ -194,10 +174,9 @@ export default function SalesAIPage() {
       pageKey="sales-ai"
       sideArtwork={SalesIllustration}
       hero={{
-        eyebrow: "AI bán phòng · Sales desk",
-        title: "Nhìn case rõ trong vài giây, dựng offer gọn, rồi mới bước vào chat.",
-        description:
-          "Màn này được chia lại theo đúng flow bán hàng thật: hiểu khách trước, lên đề xuất sau, và chỉ chat ở bước cuối để xử lý objection hoặc chốt hướng nói chuyện.",
+        eyebrow: null,
+        title: "Sales AI",
+        description: null,
         stats: [
           { label: "Lead Score", value: String(leadScore.lead_score).padStart(2, "0") },
           { label: "Buyer Type", value: formatEnumLabel(leadScore.buyer_type) },
@@ -206,7 +185,7 @@ export default function SalesAIPage() {
         illustration: SalesIllustration,
       }}
     >
-      <OrganicSection eyebrow="Quy trình" title="Brief → Đề xuất → Chat" description={null}>
+      <OrganicSection eyebrow={null} title="Workflow" description={null}>
         <div className="grid gap-6 lg:grid-cols-3">
           {workflowSteps.map((item) => (
             <StageCard key={item.step} step={item.step} title={item.title} detail={item.detail} />
@@ -214,16 +193,15 @@ export default function SalesAIPage() {
         </div>
       </OrganicSection>
 
-      <OrganicSection eyebrow="Bước 1" title="Brief khách" description={null}>
+      <OrganicSection eyebrow={null} title="Brief" description={null}>
         <div className="grid gap-6 xl:grid-cols-[0.96fr_1.04fr]">
           <article className="grid gap-4 rounded-[36px_18px_34px_24px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.56)] p-6">
             <div className="flex flex-wrap items-center gap-2">
-              <ToneBadge tone="neutral">Primary Action</ToneBadge>
-              <ToneBadge tone="praise">Dựng brief</ToneBadge>
+              <ToneBadge tone="neutral">Inputs</ToneBadge>
+              <ToneBadge tone="praise">Brief</ToneBadge>
             </div>
-            <p className="text-sm leading-7 text-[var(--earth-text-subtle)]">Mô tả ngắn gọn nhu cầu khách để AI đề xuất phù hợp.</p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <input value={form.customerName} onChange={(e) => updateField("customerName", e.target.value)} placeholder="Tên khách" className="px-4 py-3" />
+              <input value={form.customerName} onChange={(e) => updateField("customerName", e.target.value)} placeholder="Guest name" className="px-4 py-3" />
               <select value={form.travelIntent} onChange={(e) => updateField("travelIntent", e.target.value)} className="px-4 py-3">
                 <option value="leisure">Leisure</option>
                 <option value="family">Family</option>
@@ -231,19 +209,19 @@ export default function SalesAIPage() {
                 <option value="romantic">Romantic</option>
                 <option value="premium">Premium</option>
               </select>
-              <input type="number" min="1" value={form.partySize} onChange={(e) => updateField("partySize", e.target.value)} placeholder="Số khách" className="px-4 py-3" />
-              <input type="number" min="1" value={form.nights} onChange={(e) => updateField("nights", e.target.value)} placeholder="Số đêm" className="px-4 py-3" />
+              <input type="number" min="1" value={form.partySize} onChange={(e) => updateField("partySize", e.target.value)} placeholder="Guests" className="px-4 py-3" />
+              <input type="number" min="1" value={form.nights} onChange={(e) => updateField("nights", e.target.value)} placeholder="Nights" className="px-4 py-3" />
             </div>
-            <input type="number" min="0" value={form.budget} onChange={(e) => updateField("budget", e.target.value)} placeholder="Ngân sách dự kiến" className="px-4 py-3" />
+            <input type="number" min="0" value={form.budget} onChange={(e) => updateField("budget", e.target.value)} placeholder="Budget (total)" className="px-4 py-3" />
             <textarea
               rows={7}
               value={form.customerMessage}
               onChange={(e) => updateField("customerMessage", e.target.value)}
               className="px-4 py-4 leading-7"
-              placeholder="Ví dụ: Tôi muốn một phòng sạch, gần biển, giá ổn cho 4 người trong 2 đêm."
+              placeholder="Stay needs…"
             />
             <button type="button" onClick={handleGenerate} disabled={loadingAdvice} className="px-5 py-3 text-sm font-semibold">
-              {loadingAdvice ? "Đang dựng tư vấn..." : "Dựng tư vấn ngay"}
+              {loadingAdvice ? "Building advice..." : "Generate advice"}
             </button>
           </article>
 
@@ -252,7 +230,7 @@ export default function SalesAIPage() {
               <ToneBadge tone="praise">{advisor.recommended_room_type}</ToneBadge>
               <ToneBadge tone="neutral">{advisor.recommended_price_anchor}</ToneBadge>
             </div>
-            <h2 className="text-[clamp(1.8rem,3vw,2.8rem)] text-[var(--earth-secondary)]">Đề xuất gói</h2>
+            <h2 className="text-[clamp(1.8rem,3vw,2.8rem)] text-[var(--earth-secondary)]">Recommended offer</h2>
             <ReadableInsightBody text={advisor.summary} className="mt-3" />
             <div className="grid gap-3 md:grid-cols-2">
               {advisor.upsell_items.map((item) => (
@@ -263,13 +241,13 @@ export default function SalesAIPage() {
             </div>
             <div className="grid gap-3">
               <div className="rounded-[26px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.5)] p-4 text-sm leading-7 text-[var(--earth-text-muted)]">
-                <strong className="text-[var(--earth-secondary)]">Cách nói nên dùng:</strong> {advisor.sales_script}
+                {advisor.sales_script}
               </div>
               <div className="rounded-[22px] border border-[rgba(143,175,143,0.2)] bg-[rgba(143,175,143,0.08)] p-4 text-sm leading-7 text-[var(--earth-secondary)]">
-                <strong>Nếu khách lăn tăn:</strong> {advisor.objection_handling?.[0]}
+                {advisor.objection_handling?.[0]}
               </div>
               <div className="rounded-[22px] border border-[rgba(196,113,74,0.18)] bg-[rgba(196,113,74,0.06)] p-4 text-sm leading-7 text-[var(--earth-secondary)]">
-                <strong>Nếu cần chốt mềm:</strong> {advisor.suggested_discount}
+                {advisor.suggested_discount}
               </div>
             </div>
           </article>
@@ -277,16 +255,16 @@ export default function SalesAIPage() {
       </OrganicSection>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <OrganicSection eyebrow="Lead" title="Điểm số & tín hiệu" description={null}>
+        <OrganicSection eyebrow={null} title="Lead" description={null}>
           <div className="grid gap-6">
             <div className="grid gap-4 md:grid-cols-3">
-              <OrganicStatCard label="Lead Score" value={leadScore.lead_score} hint={leadScore.lead_temperature} />
-              <OrganicStatCard label="Close Rate" value={leadScore.close_probability} hint={urgencyNote} />
-              <OrganicStatCard label="Upsell Priority" value={leadScore.upsell_priority} hint={`Model: ${leadScore.model_used}`} />
+              <OrganicStatCard label="Score" value={leadScore.lead_score} />
+              <OrganicStatCard label="Close probability" value={leadScore.close_probability} />
+              <OrganicStatCard label="Upsell" value={leadScore.upsell_priority} />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-[30px_18px_32px_20px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.54)] p-5">
-                <h3 className="text-[clamp(1.4rem,2vw,2rem)] text-[var(--earth-secondary)]">Tín hiệu mua</h3>
+                <h3 className="text-[clamp(1.4rem,2vw,2rem)] text-[var(--earth-secondary)]">Buying signals</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {leadScore.buying_signals.map((item) => (
                     <ToneBadge key={item} tone="praise">
@@ -296,7 +274,7 @@ export default function SalesAIPage() {
                 </div>
               </div>
               <div className="rounded-[20px_34px_22px_36px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.54)] p-5">
-                <h3 className="text-[clamp(1.4rem,2vw,2rem)] text-[var(--earth-secondary)]">Điểm dễ nghẽn</h3>
+                <h3 className="text-[clamp(1.4rem,2vw,2rem)] text-[var(--earth-secondary)]">Friction points</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {leadScore.blockers.map((item) => (
                     <ToneBadge key={item} tone="complaint">
@@ -309,17 +287,17 @@ export default function SalesAIPage() {
           </div>
         </OrganicSection>
 
-        <OrganicSection eyebrow="Playbook" title="Kịch bản gợi ý" description={null}>
+        <OrganicSection eyebrow={null} title="Playbook" description={null}>
           <div className="grid gap-4">
             <p className="rounded-[26px] border border-[rgba(196,113,74,0.22)] bg-[rgba(196,113,74,0.08)] p-5 text-sm leading-7 text-[var(--earth-secondary)]">
               {playbook.opening_script}
             </p>
             <div className="grid gap-4 md:grid-cols-2">
               {[
-                ["Điểm nên nhấn", playbook.value_points],
-                ["Upsell nên đi trước", playbook.upsell_strategy],
-                ["Cách chốt", playbook.close_strategy],
-                ["Biến thể lời nói", playbook.script_variants],
+                ["Value", playbook.value_points],
+                ["Upsell", playbook.upsell_strategy],
+                ["Close", playbook.close_strategy],
+                ["Script", playbook.script_variants],
               ].map(([title, items]) => (
                 <div key={title} className="rounded-[28px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.52)] p-5">
                   <h3 className="text-[clamp(1.3rem,2vw,1.8rem)] text-[var(--earth-secondary)]">{title}</h3>
@@ -335,12 +313,9 @@ export default function SalesAIPage() {
         </OrganicSection>
       </section>
 
-      <OrganicSection eyebrow="Chat" title="Thử lời đáp với khách" description={null}>
+      <OrganicSection eyebrow={null} title="Chat" description={null}>
         <div className="organic-chat-stack grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
           <article className="grid gap-4 rounded-[36px_18px_38px_20px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.54)] p-6">
-            <div className="rounded-[24px] border border-[rgba(30,42,36,0.1)] bg-[rgba(255,255,255,0.75)] p-4 text-sm leading-7 text-[var(--earth-text-subtle)]">
-              Nhập câu khách nói để soạn lời đáp theo ngữ cảnh đã phân tích ở trên.
-            </div>
             <div className="max-h-[520px] space-y-3 overflow-y-auto pr-2">
               {messages.map((message, index) => (
                 <div
@@ -357,7 +332,7 @@ export default function SalesAIPage() {
               {loadingChat ? (
                 <div className="mr-8 rounded-[28px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.44)] px-4 py-4 text-sm text-[var(--earth-secondary)]">
                   <span className="typing-dots">
-                    AI đang soạn câu trả lời<span>.</span><span>.</span><span>.</span>
+                    Drafting reply<span>.</span><span>.</span><span>.</span>
                   </span>
                 </div>
               ) : null}
@@ -367,19 +342,19 @@ export default function SalesAIPage() {
                 rows={3}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ví dụ: Khách nói bên kia rẻ hơn 300k thì nên trả lời sao?"
+                placeholder="Message…"
                 className="min-h-[92px] flex-1 px-4 py-3 leading-7"
               />
               <button type="button" onClick={handleSendChat} disabled={loadingChat || !chatInput.trim()} className="self-end px-5 py-3 text-sm font-semibold">
-                Gửi để thử câu trả lời
+                Send
               </button>
             </div>
           </article>
 
           <div className="grid gap-4">
-            <OrganicStatCard label="Giai đoạn hiện tại" value={formatEnumLabel(chatMeta.playbook_stage)} hint={chatMeta.suggested_next_step} />
-            <OrganicStatCard label="Nên nhấn vào" value={chatMeta.upsell_focus} hint={`Lead nhiệt: ${chatMeta.lead_temperature}`} />
-            <OrganicStatCard label="Model" value={chatMeta.model_used} hint="Nếu có lỗi provider, thông tin lỗi sẽ hiện ngay trong chat." />
+            <OrganicStatCard label="Stage" value={formatEnumLabel(chatMeta.playbook_stage)} />
+            <OrganicStatCard label="Upsell" value={chatMeta.upsell_focus} />
+            <OrganicStatCard label="Model" value={chatMeta.model_used} />
           </div>
         </div>
       </OrganicSection>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CompetitorInsightRequest(BaseModel):
@@ -141,4 +141,27 @@ class GuestChatResponse(BaseModel):
     playbook_stage: str
     upsell_focus: str
     lead_temperature: str
+    model_used: str
+
+
+class RevenueManagerRequest(BaseModel):
+    area_name: str = "Nha Trang"
+
+
+class RevenueManagerResponse(BaseModel):
+    analysis: str
+    model_used: str
+
+
+class PricingSimulationRequest(BaseModel):
+    area_name: str = "Nha Trang"
+    room_type: str | None = Field(
+        default=None,
+        description="Room type code (e.g. D) or partial name; omit to use first type in DB.",
+    )
+    scenario_input: str = Field(..., min_length=8, description="Describe the pricing or marketing change to simulate.")
+
+
+class PricingSimulationResponse(BaseModel):
+    analysis: str
     model_used: str

@@ -60,7 +60,17 @@ VI_MARKERS = [
     "them",
     "thêm",
     "view biển",
+    "có",
+    "vâng",
+    "dạ",
+    "được",
+    "duoc",
+    "ạ",
+    "ừ",
 ]
+
+_SHORT_AFFIRMATIONS_VI = frozenset({"có", "co", "vâng", "vang", "dạ", "da", "ạ", "được", "duoc", "ừ", "uk"})
+_SHORT_AFFIRMATIONS_EN = frozenset({"yes", "ok", "okay", "yeah", "yep", "sure"})
 
 EN_MARKERS = [
     "room",
@@ -102,6 +112,83 @@ def _looks_vietnamese(text: str) -> bool:
 def _looks_english(text: str) -> bool:
     lowered = (text or "").lower()
     return any(marker in lowered for marker in EN_MARKERS)
+
+
+def _normalize_guest_reply(text: str) -> str:
+    return (text or "").strip().lower().rstrip(".!?…")
+
+
+def _is_short_affirmation(text: str) -> bool:
+    t = _normalize_guest_reply(text)
+    if not t or len(t) > 18:
+        return False
+    return t in _SHORT_AFFIRMATIONS_VI or t in _SHORT_AFFIRMATIONS_EN
+
+
+def _last_assistant_content(history: list[dict] | None) -> str:
+    for item in reversed(history or []):
+        if item.get("role") == "assistant":
+            return str(item.get("content", ""))
+    return ""
+
+
+def _assistant_prompted_room_followup(last_assistant: str, language: str) -> bool:
+    la = (last_assistant or "").lower()
+    if language == "vi":
+        cues = (
+            "giá",
+            "báo giá",
+            "thông tin",
+            "chi tiết",
+            "cụ thể",
+            "kiểm tra",
+            "tình trạng phòng",
+            "phòng và giá",
+            "giá cả",
+        )
+        return any(c in la for c in cues)
+    cues = ("price", "quote", "availability", "details", "more information", "exact rate", "specific rate")
+    return any(c in la for c in cues)
+
+
+def _focus_room_from_last_assistant(last_assistant: str, available_room_types: list[str]) -> str | None:
+    lower = (last_assistant or "").lower()
+    hits: list[tuple[int, str]] = []
+    for room in available_room_types:
+        rl = room.lower()
+        idx = lower.rfind(rl)
+        if idx >= 0:
+            hits.append((idx, room))
+    if not hits:
+        return None
+    hits.sort(key=lambda item: item[0])
+    return hits[-1][1]
+
+
+def _detect_room_detail_fulfillment(
+    history: list[dict],
+    available_room_types: list[str],
+    customer_message: str,
+    language: str,
+) -> str | None:
+    if not _is_short_affirmation(customer_message):
+        return None
+    last_a = _last_assistant_content(history)
+    if not _assistant_prompted_room_followup(last_a, language):
+        return None
+    return _focus_room_from_last_assistant(last_a, available_room_types)
+
+
+def _room_rate_hints(room_types: list[RoomType], room_name: str) -> dict[str, str]:
+    for rt in room_types:
+        if _friendly_room_name(rt) == room_name:
+            usd = Decimal(str(rt.base_price))
+            vnd = int((usd * Decimal("25000")).quantize(Decimal("1")))
+            return {
+                "usd_per_night": f"${usd:.0f}",
+                "vnd_per_night_ballpark": f"{vnd:,}".replace(",", ".") + " VND",
+            }
+    return {}
 
 
 def _preferred_language(payload: GuestAdvisorRequest, history: list[dict] | None = None) -> str:
@@ -313,13 +400,45 @@ def _build_guest_chat_fallback(
     offer: OfferRecommendation,
     history: list[dict],
     available_room_types: list[str],
+    room_types: list[RoomType] | None = None,
 ) -> dict:
     language = _preferred_language(payload, history=history)
-    message = (payload.customer_message or "").strip().lower()
-    buyer_type = _infer_buyer_type(payload)
+    raw_message = (payload.customer_message or "").strip()
+    message = raw_message.lower()
     previously_mentioned = _extract_previously_mentioned_room_types(history, available_room_types)
     next_options = _next_room_type_options(available_room_types, previously_mentioned, offer.room_type)
     upsell_focus = offer.upsell_items[0] if offer.upsell_items else "Breakfast add-on"
+
+    rt_models = room_types or []
+    fulfillment_room = (
+        _detect_room_detail_fulfillment(history, available_room_types, raw_message, language) if rt_models else None
+    )
+    if fulfillment_room:
+        hints = _room_rate_hints(rt_models, fulfillment_room)
+        usd = hints.get("usd_per_night") or "mức nội bộ"
+        vnd = hints.get("vnd_per_night_ballpark") or ""
+        if language == "vi":
+            rate_clause = f"khoảng {usd}/đêm (~{vnd})" if vnd else f"khoảng {usd}/đêm"
+            reply = (
+                f"Dạ, em báo nhanh {fulfillment_room}: tham chiếu {rate_clause}; giá cuối theo ngày và kênh có thể khác một chút. "
+                "Anh/chị cho em ngày nhận và trả phòng để em chốt đúng và kiểm tra còn phòng nhé?"
+            )
+            next_step = "Ghi nhận ngày stay và số liên hệ để giữ chỗ."
+        else:
+            rate_clause = f"around {usd}/night (ballpark {vnd})" if vnd else f"around {usd}/night"
+            reply = (
+                f"Got it — for the {fulfillment_room}, we’re at {rate_clause}; final rate depends on dates and channel. "
+                "Share your check-in and check-out dates and I’ll confirm availability and the exact quote."
+            )
+            next_step = "Collect dates and a contact path to hold the room."
+        return {
+            "reply": reply,
+            "suggested_next_step": next_step,
+            "playbook_stage": "considering_options",
+            "upsell_focus": upsell_focus,
+            "lead_temperature": "WARM",
+            "model_used": "heuristic_fallback",
+        }
 
     if language == "vi":
         if _contains_any(message, ["idea", "ý", "khác", "khac", "gợi ý", "goi y"]):
@@ -596,16 +715,27 @@ def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, histor
     competitor_context, praise_points, complaint_points = _build_competitor_context(db, payload.area_name, payload.source)
     available_room_types = _build_real_offer_options(room_types, offer.room_type)
     previously_mentioned = _extract_previously_mentioned_room_types(history, available_room_types)
-    fresh_options = _next_room_type_options(available_room_types, previously_mentioned, offer.room_type)
     language = _preferred_language(payload, history=history)
+    fulfillment_room = _detect_room_detail_fulfillment(
+        history, available_room_types, payload.customer_message or "", language
+    )
+    fulfillment_hints = _room_rate_hints(room_types, fulfillment_room) if fulfillment_room else {}
+    if fulfillment_room:
+        fresh_options = [fulfillment_room]
+    else:
+        fresh_options = _next_room_type_options(available_room_types, previously_mentioned, offer.room_type)
     buyer_type = _infer_buyer_type(payload)
 
     system_prompt = (
         "You are a hotel reservation consultant handling live guest objections. "
         "Reply in the same language as the guest. "
         "Do not begin with 'I understand', 'Toi hieu', 'Minh hieu', or 'Sure'. "
-        "Do not repeat the same room type or the same structure if the guest asks for another idea. "
         "Only use room names from the provided available_room_types. "
+        "When the guest sends a short affirmative (e.g. có / yes / ok) right after you offered details, a quote, "
+        "or an availability check for a named room, answer with concrete information for THAT room only; "
+        "use fulfillment_rate_hints when provided. Do not pivot to a different room category in that situation. "
+        "Use fresh_room_options to rotate only when the guest asks for another option, a comparison, "
+        "or explicitly wants a different idea — not when they confirm your prior offer about a specific room. "
         "Be concise, warm, sales-ready, and specific."
     )
     prompt = json.dumps(
@@ -616,6 +746,8 @@ def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, histor
             "history": history[-8:],
             "recommended_room_type": offer.room_type,
             "fresh_room_options": fresh_options,
+            "fulfillment_room": fulfillment_room,
+            "fulfillment_rate_hints": fulfillment_hints,
             "available_room_types": available_room_types,
             "upsell_items": offer.upsell_items,
             "buyer_type": buyer_type,
@@ -643,6 +775,7 @@ def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, histor
         "meta": meta,
         "offer": offer,
         "available_room_types": available_room_types,
+        "room_types": room_types,
     }
 
 
@@ -668,5 +801,6 @@ def generate_guest_chat_reply(db: Session, payload: GuestAdvisorRequest, history
             offer=prepared["offer"],
             history=history,
             available_room_types=prepared["available_room_types"],
+            room_types=prepared["room_types"],
         )
         return fallback

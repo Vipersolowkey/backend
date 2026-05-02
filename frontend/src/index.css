@@ -19,8 +19,11 @@
   --earth-text-subtle: rgba(31, 28, 26, 0.62);
   --earth-border: rgba(30, 42, 36, 0.12);
   --earth-shadow-warm: rgba(30, 42, 36, 0.08);
-  --earth-sidebar: linear-gradient(165deg, #142218 0%, #1a2e24 42%, #122018 100%);
-  --earth-sidebar-border: rgba(255, 255, 255, 0.06);
+  --earth-sidebar: linear-gradient(165deg, #13271c 0%, #1b3328 38%, #14261c 100%);
+  --earth-sidebar-border: rgba(255, 255, 255, 0.1);
+  --earth-sidebar-text: rgba(255, 255, 255, 0.94);
+  --earth-sidebar-muted: rgba(230, 245, 238, 0.82);
+  --earth-sidebar-subtle: rgba(210, 228, 218, 0.68);
   --earth-glow: rgba(184, 90, 50, 0.35);
 
   --fs-display: clamp(2.5rem, 6vw, 5rem);
@@ -89,28 +92,142 @@ body::before {
 }
 
 .organic-sidebar {
+  position: relative;
+  overflow: hidden;
   background: var(--earth-sidebar);
   border-bottom: 1px solid var(--earth-sidebar-border);
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--earth-sidebar-text);
+}
+
+.organic-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 140% 90% at 100% -20%, rgba(224, 122, 74, 0.22), transparent 52%),
+    radial-gradient(ellipse 100% 70% at -10% 110%, rgba(90, 168, 148, 0.2), transparent 55%),
+    radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.04), transparent 42%);
+  z-index: 0;
+}
+
+.organic-sidebar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(224, 146, 106, 0.55) 22%,
+    rgba(106, 178, 156, 0.45) 55%,
+    rgba(224, 146, 106, 0.35) 78%,
+    transparent 100%
+  );
+  opacity: 0.85;
+  z-index: 1;
+}
+
+.organic-sidebar-inner {
+  position: relative;
+  z-index: 2;
+}
+
+.organic-sidebar-divider {
+  margin-top: 1rem;
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+}
+
+.organic-sidebar-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--earth-sidebar-muted);
+}
+
+.organic-sidebar-title {
+  font-family: "Fraunces", serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.organic-sidebar-tagline {
+  margin-top: 0.35rem;
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--earth-sidebar-muted);
+}
+
+@media (min-width: 1024px) {
+  .organic-sidebar-tagline {
+    font-size: 13px;
+  }
 }
 
 .organic-sidebar-brand-mark {
+  display: flex;
   width: 44px;
   height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(184, 90, 50, 0.95), rgba(61, 122, 106, 0.85));
-  box-shadow: 0 0 32px rgba(184, 90, 50, 0.35);
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset;
+}
+
+.organic-sidebar-brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.organic-sidebar-nav-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.92);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.organic-sidebar-nav-icon-svg {
+  width: 18px;
+  height: 18px;
 }
 
 .organic-sidebar-navlink {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  border-radius: 14px;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.875rem;
+  gap: 0.75rem;
+  border-radius: 16px;
+  padding: 0.55rem 0.65rem 0.55rem 0.55rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--earth-sidebar-text);
   text-decoration: none;
   border: 1px solid transparent;
   transition:
@@ -122,15 +239,53 @@ body::before {
 
 .organic-sidebar-navlink:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.organic-sidebar-navlink:hover .organic-sidebar-nav-icon-wrap {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.organic-sidebar-nav-label {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.organic-sidebar-nav-hint {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--earth-sidebar-subtle);
+}
+
+@media (max-width: 1023px) {
+  .organic-sidebar-nav-hint {
+    display: none;
+  }
 }
 
 .organic-sidebar-navlink-active {
   color: #fff !important;
-  background: linear-gradient(135deg, rgba(184, 90, 50, 0.35), rgba(61, 122, 106, 0.22)) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  background: linear-gradient(135deg, rgba(210, 118, 74, 0.42), rgba(74, 148, 126, 0.32)) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.organic-sidebar-navlink-active .organic-sidebar-nav-icon-wrap {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 180, 140, 0.18);
+}
+
+.organic-sidebar-navlink-active .organic-sidebar-nav-hint {
+  color: rgba(255, 252, 248, 0.82);
 }
 
 .organic-main-column {
@@ -144,14 +299,115 @@ body::before {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.45;
+  opacity: 0.34;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
   z-index: 0;
+}
+
+.organic-main-watermark {
+  position: absolute;
+  right: -6%;
+  bottom: -10%;
+  width: min(440px, 78vw);
+  max-height: min(380px, 52vh);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 1;
+}
+
+.organic-main-watermark-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.11;
+}
+
+@media (min-width: 1024px) {
+  .organic-main-watermark {
+    right: 2%;
+    bottom: 4%;
+    width: min(400px, 38vw);
+    max-height: none;
+  }
+
+  .organic-main-watermark-svg {
+    opacity: 0.09;
+  }
 }
 
 .organic-main-inner {
   position: relative;
   z-index: 1;
+}
+
+.organic-stage-card .organic-stage-rail {
+  position: absolute;
+  left: 1.15rem;
+  top: 1.55rem;
+  bottom: 1.55rem;
+  width: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.organic-stage-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: linear-gradient(145deg, var(--earth-primary-bright), var(--earth-primary));
+  box-shadow:
+    0 0 0 4px rgba(184, 90, 50, 0.12),
+    0 2px 8px rgba(107, 66, 38, 0.15);
+}
+
+.organic-stage-line {
+  flex: 1;
+  width: 2px;
+  margin-top: 0.45rem;
+  min-height: 1.75rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(184, 90, 50, 0.42), rgba(61, 122, 106, 0.24));
+}
+
+@keyframes organic-stat-spark-flow {
+  to {
+    stroke-dashoffset: -200;
+  }
+}
+
+.luxury-app .organic-stat-spark-path {
+  stroke-dasharray: 48 220;
+  animation: organic-stat-spark-flow 16s linear infinite;
+}
+
+.luxury-app .organic-hero-spark-path {
+  stroke-dasharray: 38 200;
+  animation: organic-stat-spark-flow 19s linear infinite;
+}
+
+.luxury-app .organic-section-shell > .organic-section-ribbon {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  top: 0;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  z-index: 2;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(184, 90, 50, 0.42) 24%,
+    rgba(61, 122, 106, 0.34) 52%,
+    rgba(184, 90, 50, 0.28) 76%,
+    transparent 100%
+  );
+  opacity: 0.88;
+}
+
+.organic-sidebar-route-art .route-illustration-fill {
+  opacity: 0.42;
 }
 
 .organic-hero-shell {
@@ -461,6 +717,29 @@ body::before {
   transform: none !important;
 }
 
+.luxury-app .organic-page-shell button:focus-visible {
+  outline: 2px solid rgba(184, 90, 50, 0.82);
+  outline-offset: 3px;
+}
+
+.luxury-app .organic-page-shell input:focus-visible,
+.luxury-app .organic-page-shell textarea:focus-visible,
+.luxury-app .organic-page-shell select:focus-visible {
+  outline: 2px solid rgba(61, 122, 106, 0.72);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(61, 122, 106, 0.1);
+}
+
+.luxury-app .organic-page-shell a:focus-visible {
+  outline: 2px solid rgba(61, 122, 106, 0.62);
+  outline-offset: 3px;
+}
+
+.luxury-app .organic-sidebar-navlink:focus-visible {
+  outline: 2px solid rgba(230, 245, 238, 0.5);
+  outline-offset: 3px;
+}
+
 .luxury-app .hover-glow {
   transition:
     transform var(--transition-base),
@@ -474,6 +753,264 @@ body::before {
   border-color: rgba(196, 113, 74, 0.32) !important;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(234, 223, 206, 0.95)) !important;
   box-shadow: 0 14px 34px var(--earth-shadow-warm) !important;
+}
+
+/* —— Organic layout: section chrome, stat cards, pillar cards, divider motion —— */
+
+.luxury-app .organic-section-shell {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.38s ease,
+    border-color 0.38s ease;
+}
+
+.luxury-app .organic-section-shell::before {
+  content: "";
+  position: absolute;
+  width: min(220px, 48vw);
+  height: min(220px, 48vw);
+  top: -42%;
+  right: -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184, 90, 50, 0.16), transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.luxury-app .organic-section-shell::after {
+  content: "";
+  position: absolute;
+  width: min(180px, 42vw);
+  height: min(180px, 42vw);
+  bottom: -38%;
+  left: -6%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(61, 122, 106, 0.14), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.luxury-app .organic-section-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.luxury-app .organic-section-shell:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 22px 52px rgba(100, 60, 20, 0.12),
+    0 0 0 1px rgba(196, 113, 74, 0.1);
+  border-color: rgba(107, 66, 38, 0.2);
+}
+
+.luxury-app .organic-section-title {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.luxury-app .organic-section-title::after {
+  content: "";
+  display: block;
+  margin-top: 0.4rem;
+  height: 3px;
+  width: min(7rem, 42%);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--earth-primary), rgba(61, 122, 106, 0.55), transparent);
+  opacity: 0.9;
+}
+
+.luxury-app .organic-blob-divider {
+  position: relative;
+  isolation: isolate;
+}
+
+.luxury-app .organic-blob-divider::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.55) 48%, transparent 100%);
+  animation: organic-blob-shine 5.5s ease-in-out infinite;
+  mix-blend-mode: soft-light;
+}
+
+.luxury-app .organic-blob-path {
+  stroke-dasharray: 80 1200;
+  animation: organic-blob-dash 16s linear infinite;
+}
+
+.luxury-app .organic-stat-chip {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.luxury-app .organic-stat-chip:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(30, 42, 36, 0.1);
+  border-color: rgba(196, 113, 74, 0.22);
+}
+
+.luxury-app .organic-stat-chip .organic-stat-value {
+  transition:
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.26s ease;
+}
+
+.luxury-app .organic-stat-chip:hover .organic-stat-value {
+  transform: scale(1.03);
+  color: var(--earth-primary);
+}
+
+.luxury-app .organic-stat-card {
+  transition:
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.luxury-app .organic-stat-card::after {
+  content: "";
+  position: absolute;
+  inset: -40% -30%;
+  background: linear-gradient(
+    125deg,
+    transparent 36%,
+    rgba(255, 255, 255, 0.55) 48%,
+    transparent 58%
+  );
+  opacity: 0;
+  transform: translateX(-18%) rotate(8deg);
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+.luxury-app .organic-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px rgba(100, 60, 20, 0.14);
+  border-color: rgba(196, 113, 74, 0.28);
+}
+
+.luxury-app .organic-stat-card:hover::after {
+  opacity: 0.55;
+  animation: organic-stat-sheen 1.1s ease forwards;
+}
+
+.luxury-app .organic-stat-card .organic-stat-value {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.28s ease;
+}
+
+.luxury-app .organic-stat-card:hover .organic-stat-value {
+  transform: scale(1.04);
+  color: var(--earth-primary);
+}
+
+.luxury-app .organic-pillar-card {
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s ease,
+    border-color 0.32s ease;
+}
+
+.luxury-app .organic-pillar-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 42px rgba(30, 42, 36, 0.12);
+  border-color: rgba(61, 122, 106, 0.22);
+}
+
+.luxury-app .organic-pillar-card .organic-pillar-step {
+  display: inline-block;
+  transition: transform 0.28s ease, color 0.28s ease;
+}
+
+.luxury-app .organic-pillar-card:hover .organic-pillar-step {
+  transform: scale(1.06);
+  color: var(--earth-primary-bright);
+}
+
+@keyframes organic-blob-shine {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: translateX(-12%);
+  }
+  50% {
+    opacity: 0.55;
+    transform: translateX(12%);
+  }
+}
+
+@keyframes organic-blob-dash {
+  to {
+    stroke-dashoffset: -1280;
+  }
+}
+
+@keyframes organic-stat-sheen {
+  from {
+    transform: translateX(-22%) rotate(8deg);
+  }
+  to {
+    transform: translateX(18%) rotate(8deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luxury-app .organic-blob-path,
+  .luxury-app .organic-blob-divider::after {
+    animation: none !important;
+  }
+
+  .luxury-app .organic-stat-card:hover::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .luxury-app .organic-section-shell:hover,
+  .luxury-app .organic-stat-card:hover,
+  .luxury-app .organic-pillar-card:hover,
+  .luxury-app .organic-stat-chip:hover {
+    transform: none !important;
+  }
+
+  .organic-main-inner > .page-enter {
+    animation: none !important;
+    animation-delay: 0s !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-line,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-bar,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-leaf,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-fill,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-orb,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-frame,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-dataline,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-chat-bubble,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-tower,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-spark,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-bell-cluster,
+  .luxury-app svg.organic-sidebar-route-art .route-illustration-bell-dot,
+  .organic-page-overview .route-illustration-bar,
+  .organic-page-sales-ai .route-illustration-frame,
+  .organic-page-sales-ai .route-illustration-dataline,
+  .organic-page-sales-ai .route-illustration-chat-bubble,
+  .organic-page-competitors .route-illustration-tower,
+  .organic-page-alerts .route-illustration-spark,
+  .organic-page-alerts .route-illustration-bell-cluster,
+  .organic-page-alerts .route-illustration-bell-dot,
+  .luxury-app .botanical-flourish-stroke,
+  .luxury-app .organic-stat-spark-path,
+  .luxury-app .organic-hero-spark-path {
+    animation: none !important;
+  }
 }
 
 .luxury-app .skeleton {
@@ -514,10 +1051,48 @@ body::before {
 @keyframes earth-fade {
   from {
     opacity: 0;
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
+}
+
+.organic-main-inner > .page-enter:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+.organic-main-inner > .page-enter:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+.organic-main-inner > .page-enter:nth-child(4) {
+  animation-delay: 0.14s;
+}
+
+.organic-main-inner > .page-enter:nth-child(5) {
+  animation-delay: 0.18s;
+}
+
+.organic-main-inner > .page-enter:nth-child(6) {
+  animation-delay: 0.22s;
+}
+
+.organic-main-inner > .page-enter:nth-child(7) {
+  animation-delay: 0.26s;
+}
+
+.organic-main-inner > .page-enter:nth-child(8) {
+  animation-delay: 0.3s;
+}
+
+.organic-main-inner > .page-enter:nth-child(9) {
+  animation-delay: 0.34s;
+}
+
+.organic-main-inner > .page-enter:nth-child(10) {
+  animation-delay: 0.38s;
 }
 
 @keyframes shimmer {
@@ -573,8 +1148,268 @@ body::before {
   }
 }
 
-.organic-page-overview .route-illustration-line {
+@keyframes organic-bar-wave {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-7px);
+    opacity: 0.88;
+  }
+}
+
+@keyframes botanical-flourish-drift {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes organic-frame-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.012);
+    opacity: 0.96;
+  }
+}
+
+@keyframes organic-dataline-shimmer {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(5px);
+  }
+}
+
+@keyframes organic-chat-bobble {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.5deg) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) rotate(0.6deg) scale(1.02);
+  }
+}
+
+@keyframes organic-tower-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes organic-spark-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes organic-bell-sway {
+  0%,
+  100% {
+    transform: rotate(-2.2deg);
+  }
+  50% {
+    transform: rotate(2.2deg);
+  }
+}
+
+@keyframes organic-dot-twinkle {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Sidebar art: outside .organic-page-* — scope per route illustration */
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-line:not(.route-illustration-bar) {
   animation: earth-float 7.6s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: organic-bar-wave 3.2s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-bar-d1 {
+  animation-delay: 0s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-bar-d2 {
+  animation-delay: 0.18s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-bar-d3 {
+  animation-delay: 0.36s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-bar-d4 {
+  animation-delay: 0.54s;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-leaf {
+  animation: earth-drift 8.4s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-overview .route-illustration-orb {
+  animation: earth-pulse-soft 8.2s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-frame {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: organic-frame-breathe 9.5s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-dataline {
+  animation: organic-dataline-shimmer 3.4s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-dataline-d1 {
+  animation-delay: 0s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-dataline-d2 {
+  animation-delay: 0.12s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-dataline-d3 {
+  animation-delay: 0.24s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-dataline-d4 {
+  animation-delay: 0.36s;
+}
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-dataline-d5 {
+  animation-delay: 0.48s;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-chat-bubble {
+  transform-box: fill-box;
+  transform-origin: 55% 45%;
+  animation: organic-chat-bobble 4.2s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-leaf {
+  animation: earth-drift 8.8s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-sales .route-illustration-orb {
+  animation: earth-pulse-soft 8.4s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-competitors .route-illustration-tower {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: organic-tower-breathe 4.2s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-competitors .route-illustration-tower-right {
+  animation-delay: -2.1s;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-competitors .route-illustration-line:not(.route-illustration-tower) {
+  animation: earth-float 8.2s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-competitors .route-illustration-leaf {
+  animation: earth-drift 8.8s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: organic-spark-pulse 2.8s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-spark-right {
+  animation-delay: 0.45s;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-bell-cluster {
+  transform-box: fill-box;
+  transform-origin: 212px 118px;
+  animation: organic-bell-sway 5.4s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-bell-cluster .route-illustration-line,
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-bell-cluster .route-illustration-fill,
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-bell-cluster .route-illustration-orb {
+  animation: none !important;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-bell-dot {
+  animation: organic-dot-twinkle 2.2s ease-in-out infinite;
+}
+
+.luxury-app svg.organic-sidebar-route-art.route-illustration-alerts .route-illustration-leaf {
+  animation: earth-drift 8.6s ease-in-out infinite;
+}
+
+/* Decorative flourish in sidebar fallback */
+.luxury-app .botanical-flourish-stroke {
+  animation: botanical-flourish-drift 5.8s ease-in-out infinite;
+}
+
+.luxury-app .botanical-flourish-stroke-a {
+  animation-delay: 0s;
+}
+.luxury-app .botanical-flourish-stroke-b {
+  animation-delay: 0.35s;
+}
+.luxury-app .botanical-flourish-stroke-c {
+  animation-delay: 0.7s;
+}
+.luxury-app .botanical-flourish-stroke-d {
+  animation-delay: 1.05s;
+}
+.luxury-app .botanical-flourish-stroke-e {
+  animation-delay: 1.35s;
+}
+
+.organic-page-overview .route-illustration-line:not(.route-illustration-bar) {
+  animation: earth-float 7.6s ease-in-out infinite;
+}
+
+.organic-page-overview .route-illustration-bar {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: organic-bar-wave 3.1s ease-in-out infinite;
+}
+
+.organic-page-overview .route-illustration-bar-d1 {
+  animation-delay: 0s;
+}
+.organic-page-overview .route-illustration-bar-d2 {
+  animation-delay: 0.16s;
+}
+.organic-page-overview .route-illustration-bar-d3 {
+  animation-delay: 0.32s;
+}
+.organic-page-overview .route-illustration-bar-d4 {
+  animation-delay: 0.48s;
 }
 
 .organic-page-overview .route-illustration-leaf {
@@ -585,38 +1420,92 @@ body::before {
   animation: earth-pulse-soft 9.2s ease-in-out infinite;
 }
 
-.organic-page-sales-ai .route-illustration-line {
-  animation: earth-float 7.2s ease-in-out infinite;
+.organic-page-sales-ai .route-illustration-frame {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: organic-frame-breathe 9.5s ease-in-out infinite;
 }
 
-.organic-page-sales-ai .route-illustration-fill {
-  animation: earth-pulse-soft 8.6s ease-in-out infinite;
+.organic-page-sales-ai .route-illustration-dataline {
+  animation: organic-dataline-shimmer 3.4s ease-in-out infinite;
 }
 
-.organic-page-sales-ai .route-illustration-orb,
+.organic-page-sales-ai .route-illustration-dataline-d1 {
+  animation-delay: 0s;
+}
+.organic-page-sales-ai .route-illustration-dataline-d2 {
+  animation-delay: 0.12s;
+}
+.organic-page-sales-ai .route-illustration-dataline-d3 {
+  animation-delay: 0.24s;
+}
+.organic-page-sales-ai .route-illustration-dataline-d4 {
+  animation-delay: 0.36s;
+}
+.organic-page-sales-ai .route-illustration-dataline-d5 {
+  animation-delay: 0.48s;
+}
+
+.organic-page-sales-ai .route-illustration-chat-bubble {
+  transform-box: fill-box;
+  transform-origin: 55% 45%;
+  animation: organic-chat-bobble 4.2s ease-in-out infinite;
+}
+
+.organic-page-sales-ai .route-illustration-orb {
+  animation: earth-pulse-soft 8.4s ease-in-out infinite;
+}
+
 .organic-page-sales-ai .route-illustration-leaf {
   animation: earth-drift 9s ease-in-out infinite;
 }
 
-.organic-page-competitors .route-illustration-line {
-  animation: earth-float 8.4s ease-in-out infinite;
+.organic-page-competitors .route-illustration-tower {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: organic-tower-breathe 4.2s ease-in-out infinite;
 }
 
-.organic-page-competitors .route-illustration-fill {
-  animation: earth-pulse-soft 9.8s ease-in-out infinite;
+.organic-page-competitors .route-illustration-tower-right {
+  animation-delay: -2.1s;
+}
+
+.organic-page-competitors .route-illustration-line:not(.route-illustration-tower) {
+  animation: earth-float 8.4s ease-in-out infinite;
 }
 
 .organic-page-competitors .route-illustration-leaf {
   animation: earth-drift 8.8s ease-in-out infinite;
 }
 
-.organic-page-alerts .route-illustration-line {
-  animation: earth-float 7.8s ease-in-out infinite;
+.organic-page-alerts .route-illustration-spark {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: organic-spark-pulse 2.8s ease-in-out infinite;
 }
 
-.organic-page-alerts .route-illustration-fill,
-.organic-page-alerts .route-illustration-orb {
-  animation: earth-pulse-soft 8.8s ease-in-out infinite;
+.organic-page-alerts .route-illustration-spark-right {
+  animation-delay: 0.45s;
+}
+
+.organic-page-alerts .route-illustration-bell-cluster {
+  transform-box: fill-box;
+  transform-origin: 212px 118px;
+  animation: organic-bell-sway 5.4s ease-in-out infinite;
+}
+
+.organic-page-alerts .route-illustration-bell-cluster .route-illustration-line,
+.organic-page-alerts .route-illustration-bell-cluster .route-illustration-fill,
+.organic-page-alerts .route-illustration-bell-cluster .route-illustration-orb {
+  animation: none !important;
+}
+
+.organic-page-alerts .route-illustration-bell-dot {
+  animation: organic-dot-twinkle 2.2s ease-in-out infinite;
+}
+
+.organic-page-alerts .route-illustration-leaf {
+  animation: earth-drift 8.6s ease-in-out infinite;
 }
 
 .sales-brief-card,
