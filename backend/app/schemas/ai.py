@@ -17,6 +17,7 @@ class CompetitorInsightResponse(BaseModel):
     complaint_points: list[str]
     strategic_summary: str
     model_used: str
+    data_grounding: dict | None = None
 
 
 class CompetitorHotelReview(BaseModel):
@@ -151,6 +152,7 @@ class RevenueManagerRequest(BaseModel):
 class RevenueManagerResponse(BaseModel):
     analysis: str
     model_used: str
+    data_grounding: dict | None = None
 
 
 class PricingSimulationRequest(BaseModel):
@@ -160,8 +162,14 @@ class PricingSimulationRequest(BaseModel):
         description="Room type code (e.g. D) or partial name; omit to use first type in DB.",
     )
     scenario_input: str = Field(..., min_length=8, description="Describe the pricing or marketing change to simulate.")
+    demand_scenario: str = Field(
+        default="baseline",
+        description="baseline | holiday_peak | low_season | rainy_week | major_event",
+    )
+    property_id: int | None = Field(default=None, description="Optional property scope for occupancy/context.")
 
 
 class PricingSimulationResponse(BaseModel):
     analysis: str
     model_used: str
+    data_grounding: dict | None = None

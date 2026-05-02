@@ -14,12 +14,21 @@ from app.models.pms import Booking, Room, RoomType
 from app.services.llm import LlmUnavailableError, generate_text
 from app.services.predictive import ACTIVE_BOOKING_STATUSES
 
+DEMAND_SCENARIOS: dict[str, dict[str, float | str]] = {
+    "baseline": {"occ": 1.0, "rev": 1.0, "copy": "Neutral baseline demand."},
+    "holiday_peak": {"occ": 1.35, "rev": 1.12, "copy": "Peak leisure / holiday compression increases promo sensitivity."},
+    "low_season": {"occ": 0.75, "rev": 0.9, "copy": "Low season — harder to lift occupancy without sharper incentives."},
+    "rainy_week": {"occ": 0.85, "rev": 0.92, "copy": "Weather-soft demand week for leisure segments."},
+    "major_event": {"occ": 1.2, "rev": 1.18, "copy": "City-wide event lifts compression and BAR power."},
+}
+
 PRICING_SIM_SYSTEM = """You are a hotel pricing simulation engine.
 
 Your task is to estimate the impact of a pricing or marketing change described in the scenario.
 
 Rules:
 - Use only the context numbers provided. State clearly when an outcome is an estimate, not a guarantee.
+- A demand scenario label is included (baseline, holiday peaks, low season, etc.) — reflect it in your qualitative reasoning.
 - Predict directional impact on occupancy and revenue (percentage change is fine).
 - Keep reasoning brief and tied to the scenario + competitor and demand context.
 - Avoid generic filler.
@@ -63,21 +72,35 @@ def _resolve_room_type(db: Session, room_type_hint: str | None) -> RoomType:
     return row
 
 
-def _collect_context(db: Session, *, area_name: str, room_type_hint: str | None) -> dict:
+def _collect_context(
+    db: Session,
+    *,
+    area_name: str,
+    room_type_hint: str | None,
+    property_id: int | None,
+    demand_scenario: str,
+) -> dict:
     today = date.today()
     rt = _resolve_room_type(db, room_type_hint)
 
-    total_rooms = db.scalar(select(func.count(Room.id))) or 0
-    occupied = (
-        db.scalar(
-            select(func.count(func.distinct(Booking.room_id))).where(
-                Booking.status.in_(tuple(ACTIVE_BOOKING_STATUSES)),
-                Booking.check_in <= today,
-                Booking.check_out > today,
-            )
+    q_rooms = select(func.count(Room.id)).where(Room.status != "inactive")
+    if property_id is not None:
+        q_rooms = q_rooms.where(Room.property_id == property_id)
+    total_rooms = db.scalar(q_rooms) or 0
+
+    occ_stmt = (
+        select(func.count(func.distinct(Booking.room_id)))
+        .join(Room, Room.id == Booking.room_id)
+        .where(
+            Booking.status.in_(tuple(ACTIVE_BOOKING_STATUSES)),
+            Booking.check_in <= today,
+            Booking.check_out > today,
+            Room.status != "inactive",
         )
-        or 0
     )
+    if property_id is not None:
+        occ_stmt = occ_stmt.where(Room.property_id == property_id)
+    occupied = db.scalar(occ_stmt) or 0
     occupancy_pct = round(100.0 * float(occupied) / float(total_rooms), 2) if total_rooms else 0.0
 
     rev_rows = db.scalars(
@@ -111,6 +134,8 @@ def _collect_context(db: Session, *, area_name: str, room_type_hint: str | None)
         for r in comp_rows
     ]
 
+    scen = DEMAND_SCENARIOS.get(demand_scenario, DEMAND_SCENARIOS["baseline"])
+
     return {
         "room_type": {"code": rt.code, "name": rt.name},
         "current_price": float(rt.base_price),
@@ -121,6 +146,9 @@ def _collect_context(db: Session, *, area_name: str, room_type_hint: str | None)
         },
         "demand_data": demand_data,
         "competitor_prices": competitor_prices,
+        "demand_scenario": demand_scenario,
+        "demand_scenario_notes": str(scen["copy"]),
+        "property_id_filter": property_id,
         "date_context": {
             "today_utc": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%MZ"),
             "market_area": area_name,
@@ -135,6 +163,7 @@ def _build_user_prompt(context: dict, scenario_input: str) -> str:
 - Occupancy rate: {json.dumps(context["occupancy"], default=_json_default, ensure_ascii=False)}
 - Historical demand: {json.dumps(context["demand_data"], default=_json_default, ensure_ascii=False)}
 - Competitor prices: {json.dumps(context["competitor_prices"], default=_json_default, ensure_ascii=False)}
+- Demand scenario: {context.get("demand_scenario", "baseline")} — {context.get("demand_scenario_notes", "")}
 
 Scenario:
 {scenario_input.strip()}
@@ -168,12 +197,18 @@ def _heuristic_simulation(context: dict, scenario: str) -> str:
     if rev_delta < -1 and occ_delta > 3:
         apply = "Should not apply" if rev_delta < -3 else "Should apply"
 
+    bias = DEMAND_SCENARIOS.get(context.get("demand_scenario", "baseline"), DEMAND_SCENARIOS["baseline"])
+    occ_delta *= float(bias["occ"])
+    rev_delta *= float(bias["rev"])
+    scen_note = str(bias["copy"])
+
     return (
         "📊 Simulation Result:\n"
         f"- Occupancy change: {'+' if occ_delta >= 0 else ''}{occ_delta:.1f}%\n"
         f"- Revenue change: {'+' if rev_delta >= 0 else ''}{rev_delta:.1f}%\n\n"
         "🧠 Reasoning:\n"
         f"- {reason}\n"
+        f"- Demand scenario adjustment: {scen_note}\n"
         f"- Baseline proxy occupancy {context['occupancy']['occupancy_percent_proxy']:.1f}% and BAR {context['current_price']:.2f} for {context['room_type']['name']}.\n\n"
         "📌 Conclusion:\n"
         f"- {apply} — heuristic model only; configure LLM for scenario-specific refinement.\n"
@@ -181,12 +216,45 @@ def _heuristic_simulation(context: dict, scenario: str) -> str:
 
 
 def generate_pricing_simulation(
-    *, db: Session, area_name: str = "Nha Trang", room_type: str | None = None, scenario_input: str = ""
-) -> dict[str, str]:
-    context = _collect_context(db, area_name=area_name, room_type_hint=room_type)
+    *,
+    db: Session,
+    area_name: str = "Nha Trang",
+    room_type: str | None = None,
+    scenario_input: str = "",
+    demand_scenario: str = "baseline",
+    property_id: int | None = None,
+) -> dict[str, str | dict]:
+    from app.models.property_ops import Property
+
+    resolved_area = area_name
+    if property_id is not None:
+        prop = db.get(Property, property_id)
+        if prop is not None:
+            resolved_area = prop.area_name
+
+    ds = demand_scenario if demand_scenario in DEMAND_SCENARIOS else "baseline"
+    context = _collect_context(
+        db,
+        area_name=resolved_area,
+        room_type_hint=room_type,
+        property_id=property_id,
+        demand_scenario=ds,
+    )
     user_prompt = _build_user_prompt(context, scenario_input)
+    grounding = {
+        "occupancy_proxy": context["occupancy"],
+        "competitor_prices_sample": context["competitor_prices"][:10],
+        "demand_history_months": context["demand_data"],
+        "demand_scenario": ds,
+        "property_id_filter": property_id,
+        "note": "Simulation percentages should remain consistent with these proxy figures.",
+    }
     try:
         text, model_used = generate_text(user_prompt, PRICING_SIM_SYSTEM)
-        return {"analysis": text.strip(), "model_used": model_used}
+        return {"analysis": text.strip(), "model_used": model_used, "data_grounding": grounding}
     except LlmUnavailableError:
-        return {"analysis": _heuristic_simulation(context, scenario_input), "model_used": "heuristic_fallback"}
+        return {
+            "analysis": _heuristic_simulation(context, scenario_input),
+            "model_used": "heuristic_fallback",
+            "data_grounding": grounding,
+        }

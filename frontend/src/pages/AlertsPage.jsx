@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   currency,
+  evaluateAlertThresholds,
   fallbackAlerts,
   fallbackMonthlyRevenue,
   fetchDashboard,
   fetchPromoEmail,
+  fetchProperties,
   normalizeUiErrorMessage,
 } from "../lib/dashboardApi";
 import {
@@ -24,6 +26,10 @@ export default function AlertsPage() {
   const [alertSearch, setAlertSearch] = useState("");
   const [loadingId, setLoadingId] = useState(null);
   const [statusMessage, setStatusMessage] = useState("");
+  const [properties, setProperties] = useState([]);
+  const [selectedPropertyId, setSelectedPropertyId] = useState("");
+  const [evalLoading, setEvalLoading] = useState(false);
+  const [evalResult, setEvalResult] = useState(null);
 
   const pageStages = [
     { step: "01", title: "Overview", detail: null },
@@ -32,9 +38,16 @@ export default function AlertsPage() {
   ];
 
   useEffect(() => {
+    fetchProperties()
+      .then(setProperties)
+      .catch(() => setProperties([]));
+  }, []);
+
+  useEffect(() => {
     async function loadDashboardData() {
       try {
-        const payload = await fetchDashboard();
+        const pid = selectedPropertyId === "" ? null : Number(selectedPropertyId);
+        const payload = await fetchDashboard(pid);
         setMonthlyRevenue(payload.monthlyRevenue);
         setAlerts(payload.alerts);
       } catch {
@@ -43,7 +56,7 @@ export default function AlertsPage() {
     }
 
     loadDashboardData();
-  }, []);
+  }, [selectedPropertyId]);
 
   const filteredAlerts = useMemo(() => {
     const keyword = alertSearch.trim().toLowerCase();
@@ -130,6 +143,50 @@ export default function AlertsPage() {
             />
           ))}
         </div>
+      </OrganicSection>
+
+      <OrganicSection eyebrow={null} title="Threshold engine" description="Compare live occupancy and HIGH-risk counts vs configured rules; optional webhook POST when triggered.">
+        <div className="flex flex-wrap items-end gap-4">
+          <label className="grid gap-2 text-sm font-semibold text-[var(--earth-secondary)]">
+            Property scope
+            <select
+              className="min-w-[220px] px-3 py-2"
+              value={selectedPropertyId}
+              onChange={(e) => setSelectedPropertyId(e.target.value)}
+            >
+              <option value="">All properties</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            disabled={evalLoading}
+            className="rounded-full border border-[rgba(61,122,106,0.35)] bg-[rgba(61,122,106,0.12)] px-5 py-3 text-sm font-semibold text-[var(--earth-secondary)]"
+            onClick={async () => {
+              setEvalLoading(true);
+              try {
+                const pid = selectedPropertyId === "" ? null : Number(selectedPropertyId);
+                const res = await evaluateAlertThresholds(pid);
+                setEvalResult(res);
+              } catch {
+                setEvalResult({ error: "Evaluate failed" });
+              } finally {
+                setEvalLoading(false);
+              }
+            }}
+          >
+            {evalLoading ? "Evaluating…" : "Run threshold check"}
+          </button>
+        </div>
+        {evalResult ? (
+          <pre className="mt-4 max-h-64 overflow-auto rounded-2xl border border-[rgba(30,42,36,0.1)] bg-[rgba(255,255,255,0.65)] p-4 text-xs leading-relaxed">
+            {JSON.stringify(evalResult, null, 2)}
+          </pre>
+        ) : null}
       </OrganicSection>
 
       {promoPreview ? (

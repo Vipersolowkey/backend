@@ -13,21 +13,27 @@ from app.models.pms import Booking, Room
 from app.services.predictive import ACTIVE_BOOKING_STATUSES
 
 
-def _occupancy_today_pct(db: Session) -> float | None:
-    total_rooms = db.scalar(select(func.count(Room.id))) or 0
+def _occupancy_today_pct(db: Session, property_id: int | None = None) -> float | None:
+    q_total = select(func.count(Room.id)).where(Room.status != "inactive")
+    if property_id is not None:
+        q_total = q_total.where(Room.property_id == property_id)
+    total_rooms = db.scalar(q_total) or 0
     if not total_rooms:
         return None
     today = date.today()
-    occupied = (
-        db.scalar(
-            select(func.count(func.distinct(Booking.room_id))).where(
-                Booking.status.in_(tuple(ACTIVE_BOOKING_STATUSES)),
-                Booking.check_in <= today,
-                Booking.check_out > today,
-            )
+    stmt_occ = (
+        select(func.count(func.distinct(Booking.room_id)))
+        .join(Room, Room.id == Booking.room_id)
+        .where(
+            Booking.status.in_(tuple(ACTIVE_BOOKING_STATUSES)),
+            Booking.check_in <= today,
+            Booking.check_out > today,
+            Room.status != "inactive",
         )
-        or 0
     )
+    if property_id is not None:
+        stmt_occ = stmt_occ.where(Room.property_id == property_id)
+    occupied = db.scalar(stmt_occ) or 0
     return round(100.0 * float(occupied) / float(total_rooms), 2)
 
 
@@ -64,6 +70,7 @@ def build_operational_priorities(
     high_risk_booking_count: int,
     revenue_mom_growth_percent: Decimal,
     latest_period_label: str,
+    property_id: int | None = None,
 ) -> list[dict]:
     """
     Return ordered list of dicts compatible with OperationalPriority schema:
@@ -140,7 +147,7 @@ def build_operational_priorities(
             }
         )
 
-    occ = _occupancy_today_pct(db)
+    occ = _occupancy_today_pct(db, property_id)
     if occ is not None:
         if occ < 12:
             items.append(

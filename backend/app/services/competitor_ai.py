@@ -144,6 +144,18 @@ def generate_competitor_insight(db: Session, payload: CompetitorInsightRequest) 
         except LlmUnavailableError:
             pass
 
+    grounding_hotels = [
+        {
+            "hotel_name": row.hotel_name,
+            "search_area": row.search_area,
+            "current_price": float(row.current_price) if row.current_price is not None else None,
+            "currency": row.currency,
+            "availability_status": row.availability_status,
+            "source": row.source,
+        }
+        for row in rows[: payload.max_hotels]
+    ]
+
     return {
         "area_name": payload.area_name,
         "source": payload.source,
@@ -153,6 +165,10 @@ def generate_competitor_insight(db: Session, payload: CompetitorInsightRequest) 
         "complaint_points": complaint_points,
         "strategic_summary": summary,
         "model_used": model_used,
+        "data_grounding": {
+            "summary": "Rows below are competitor snapshots used for review counts and keyword mining.",
+            "hotels": grounding_hotels,
+        },
     }
 
 

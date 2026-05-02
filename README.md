@@ -1,45 +1,58 @@
-# Dự án: Quản trị & phân tích khách sạn hỗ trợ AI (UEL)
+# Quản trị & phân tích khách sạn hỗ trợ AI (UEL)
 
-*Tài liệu này giúp **giám khảo / người xem ** hiểu nhanh dự án là gì, có ích gì cho nhà điều hành khách sạn, và cách mở xem trên máy tính.*
-
----
-
-## Dự án này làm gì?
-
-Đây là một **bản mô phỏng (demo)** hệ thống hỗ trợ **quản lý vận hành và ra quyết định giá** cho khách sạn. Sinh viên tập trung vào:
-
-- Theo dõi **doanh thu**, **xu hướng** và **cảnh báo** liên quan đến nguy cơ khách **hủy phòng** khi giá thị trường cạnh tranh hơn.
-- Xem **đối thủ / thị trường** (dữ liệu mẫu đã nhập sẵn) và nhận **phân tích gợi ý** nhờ AI (khi đã cấu hình khóa dịch vụ AI).
-- Thử các công cụ bổ sung: **lịch công suất phòng**, **xuất báo cáo Excel**, **CRM khách nhẹ**, **nhiều cơ sở / khu vực**, **ngưỡng cảnh báo** có thể gửi tin ra webhook.
-
-Ứng dụng **không thay thế** phần mềm quản lý khách sạn (PMS) thật; mục tiêu học thuật là cho thấy cách **kết hợp dữ liệu + giao diện + AI** để hỗ trợ ra quyết định.
+Tài liệu mô tả **phạm vi, chức năng và cách triển khai bản demo** trên máy cục bộ. Phần đầu trình bày bằng ngôn ngữ gần với vận hành khách sạn; phụ lục ghi các chi tiết kỹ thuật ngắn.
 
 ---
 
-## Giám khảo nên xem những phần nào?
+## Tổng quan
 
-Trên giao diện web (sau khi chạy demo — xem mục dưới), có thể lần lượt mở các mục trong menu:
+Đây là **phiên bản demo** của một hệ thống hỗ trợ **theo dõi vận hành và định giá**, tích hợp **phân tích thị trường / đối thủ** và **module AI tùy chọn** (khi cấu hình khóa dịch vụ). Dữ liệu trong demo là **mẫu đã nạp sẵn**, phục vụ minh họa luồng làm việc chứ không phải PMS thực tế.
 
-| Khu vực trên màn hình | Sinh viên muốn thể hiện điều gì |
-|----------------------|-----------------------------------|
-| **Overview** | Tổng quan doanh thu, ưu tiên vận hành, thử **AI Revenue Manager**, **Pricing Lab** (mô phỏng kịch bản giá / mùa cao điểm), và **góc nhìn thị trường** so với đối thủ. Có thể chọn **một cơ sở / khu vực** để lọc cảnh báo. |
-| **Calendar** | Lịch **mức độ lấp đầy phòng theo ngày** (ước lượng từ dữ liệu demo). |
-| **Reports** | **Tải file Excel / CSV** tóm tắt số liệu phục vụ báo cáo hoặc trình bày. |
-| **Guests CRM** | **Hồ sơ khách nhẹ**: nhãn (tag), ghi chú, dòng thời gian — minh họa quản trị quan hệ khách. |
-| **Sales AI** | Kịch bản bán hàng / tư vấn khách (AI). |
-| **Competitors** | Soi đối thủ và chat / insight liên quan thị trường. |
-| **Alerts** | Danh sách booking **rủi ro cao**, email giữ chân khách; có **kiểm tra ngưỡng cảnh báo** (occupancy, số booking rủi ro…). |
+**Phạm vi chính:**
+
+- Dashboard **doanh thu**, **tin hiệu ưu tiên** và **cảnh báo** gắn với nguy cơ **hủy phòng** khi áp lực giá từ thị trường.
+- **Đối thủ / khu vực**: dữ liệu competitor nhập sẵn; có thể bổ sung insight hoặc hội thoại qua AI khi bật nhà cung cấp LLM.
+- **Công cụ bổ sung** (tùy phiên bản mã nguồn): lịch **công suất phòng**, **xuất báo cáo** (Excel/CSV), **CRM khách** dạng nhẹ, **đa cơ sở / khu vực**, **ngưỡng cảnh báo** kèm webhook.
+
+Giải pháp **không** thay thế phần mềm quản lý buồng phòng (PMS) **đầy đủ**; thể hiện hướng **kết hợp dữ liệu, giao diện và AI** trong bối cảnh revenue / ops.
+
 ---
 
-## Cách chạy demo trên máy 
+## Cấu trúc giao diện
 
-**Ý tưởng:** máy cần có **Python** và **Node.js**; chạy **máy chủ phía sau** (backend) rồi **giao diện** (frontend), sau đó mở trình duyệt.
+Sau khi ứng dụng web được khởi chạy (mục *Cài đặt và chạy thử*), menu điều hướng dẫn tới các khu vực sau:
+
+| Mục menu | Mô tả ngắn |
+|----------|------------|
+| **Overview** | Tổng quan doanh thu, thứ tự ưu tiên vận hành; **AI Revenue Manager**, **Pricing Lab** (mô phỏng kịch bản giá / kịch bản nhu cầu); **market lens** so với đối thủ; có thể **lọc theo cơ sở / khu vực**. |
+| **Calendar** | Lịch **mức lấp đầy phòng theo ngày** (ước lượng từ dữ liệu demo). |
+| **Reports** | **Tải** file Excel hoặc CSV tóm tắt phục vụ báo cáo. |
+| **Guests CRM** | Hồ sơ khách nhẹ: nhãn, ghi chú, dòng thời gian. |
+| **Sales AI** | Kịch bản tư vấn / bán hàng có hỗ trợ AI. |
+| **Competitors** | Theo dõi đối thủ, insight và chat liên quan thị trường. |
+| **Alerts** | Booking **rủi ro cao**, email giữ chân; có **đánh giá ngưỡng** (occupancy, số booking rủi ro). |
+
+Việc **trình chiếu hoặc ghi hình** luồng thao tác trên giao diện có thể đi kèm khi không triển khai demo trực tiếp trên máy người đọc.
+
+---
+
+## Thuật ngữ (phiên bản rút gọn)
+
+- **Dashboard / Overview**: Màn hình tổng hợp chỉ số và cảnh báo cho nhà điều hành.
+- **AI trong demo**: Gọi API LLM bên ngoài để sinh văn bản phân tích / gợi ý từ **bối cảnh số liệu đưa vào**. Khi chưa cấu hình khóa, một số luồng **vẫn phản hồi** bằng **luật heuristic** có trong mã — không phải phản hồi ngẫu nhiên.
+- **SQLite**: Cơ sở dữ liệu một file, phù hợp demo cục bộ; không bắt buộc PostgreSQL để chạy thử mặc định.
+
+---
+
+## Cài đặt và chạy thử
+
+**Điều kiện:** Python và Node.js trên máy chạy demo. **Backend** phục vụ API và dữ liệu; **frontend** phục vụ trình duyệt.
 
 ### Windows (PowerShell)
 
-Đổi `D:\du lich` thành đúng thư mục chứa mã nguồn.
+Thay `D:\du lich` bằng đường dẫn thư mục chứa mã nguồn.
 
-**Cửa sổ 1 — máy chủ dữ liệu & API:**
+**Terminal 1 — API và dữ liệu:**
 
 ```powershell
 cd "D:\du lich"
@@ -52,7 +65,7 @@ python backend\scripts\seed_db.py
 uvicorn app.main:app --reload --app-dir backend
 ```
 
-**Cửa sổ 2 — giao diện web:**
+**Terminal 2 — giao diện:**
 
 ```powershell
 cd "D:\du lich\frontend"
@@ -60,22 +73,22 @@ npm install
 npm run dev
 ```
 
-Mở trình duyệt: **http://127.0.0.1:5173** — trang chủ demo.
+Trình duyệt: **http://127.0.0.1:5173**
 
-*(Để AI “nói” đầy đủ hơn: trong file `backend\.env` điền khóa **GROQ_API_KEY** hoặc cấu hình **Ollama** theo hướng dẫn trong `backend/README.md`.)*
+Để kích hoạt LLM đầy đủ: trong `backend\.env` đặt **GROQ_API_KEY** hoặc cấu hình **Ollama** theo [backend/README.md](backend/README.md).
 
 ### macOS / Linux
 
-Tương tự: một terminal chạy backend (sau `seed`), một terminal chạy `npm run dev` trong thư mục `frontend`. Chi tiết xem [backend/README.md](backend/README.md) và [frontend/README.md](frontend/README.md).
+Quy trình tương tự (virtualenv, `seed_db`, `uvicorn`, sau đó `npm run dev` trong `frontend/`). Chi tiết: [backend/README.md](backend/README.md), [frontend/README.md](frontend/README.md).
 
 ---
 
-## Phụ lục — Thông tin kỹ thuật ngắn (nếu cần)
+## Phụ lục kỹ thuật
 
-- **Cấu trúc thư mục:** `backend/` (API, dữ liệu mẫu), `frontend/` (giao diện).
-- **API kiểm tra hoạt động:** http://127.0.0.1:8000/health — **tài liệu API cho lập trình viên:** http://127.0.0.1:8000/docs  
-- **Lưu ý:** Phiên bản demo **chưa có đăng nhập / phân quyền**; chỉ nên chạy trên máy cá nhân hoặc mạng tin cậy. Triển khai thật cần thêm bảo mật và HTTPS.
+- **Thư mục:** `backend/` (API, seed), `frontend/` (React/Vite).
+- **Kiểm tra API:** http://127.0.0.1:8000/health — **OpenAPI:** http://127.0.0.1:8000/docs  
+- **Bảo mật:** Bản demo **không** có xác thực người dùng; chỉ dùng trong môi trường cục bộ hoặc mạng tin cậy. Triển khai công khai cần HTTPS, auth và giới hạn tần suất gọi AI.
 
 ---
 
-*Tài liệu chi tiết song ngữ / kỹ thuật bổ sung có thể có trong [TAI_LIEU_DU_AN.md](TAI_LIEU_DU_AN.md) .*
+Tài liệu dự án bổ sung (nếu có): [TAI_LIEU_DU_AN.md](TAI_LIEU_DU_AN.md).

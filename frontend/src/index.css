@@ -371,22 +371,6 @@ body::before {
   background: linear-gradient(180deg, rgba(184, 90, 50, 0.42), rgba(61, 122, 106, 0.24));
 }
 
-@keyframes organic-stat-spark-flow {
-  to {
-    stroke-dashoffset: -200;
-  }
-}
-
-.luxury-app .organic-stat-spark-path {
-  stroke-dasharray: 48 220;
-  animation: organic-stat-spark-flow 16s linear infinite;
-}
-
-.luxury-app .organic-hero-spark-path {
-  stroke-dasharray: 38 200;
-  animation: organic-stat-spark-flow 19s linear infinite;
-}
-
 .luxury-app .organic-section-shell > .organic-section-ribbon {
   position: absolute;
   left: 9%;
@@ -638,26 +622,28 @@ body::before {
   color: var(--earth-primary) !important;
 }
 
-.luxury-app [class*="shadow-"] {
+/* Only remap Tailwind preset shadows; keep arbitrary shadow-[…] from components */
+.luxury-app [class*="shadow-"]:not([class*="shadow-["]) {
   box-shadow:
     0 10px 26px var(--earth-shadow-warm),
     0 2px 6px rgba(107, 66, 38, 0.08) !important;
 }
 
-.luxury-app article,
-.luxury-app section > div > div,
+/* Organic cards set their own asymmetric radii via utilities — do not override */
+.luxury-app article:not(.organic-stat-card):not(.organic-stage-card):not(.organic-pillar-card),
+.luxury-app section > div > div:not([class*="organic-"]),
 .luxury-app section > div > article,
 .luxury-app section > div > aside {
   border-radius: var(--radius-organic-a);
 }
 
-.luxury-app article:nth-of-type(2n),
-.luxury-app section > div > div:nth-of-type(2n) {
+.luxury-app article:not(.organic-stat-card):not(.organic-stage-card):not(.organic-pillar-card):nth-of-type(2n),
+.luxury-app section > div > div:not([class*="organic-"]):nth-of-type(2n) {
   border-radius: var(--radius-organic-b);
 }
 
-.luxury-app article:nth-of-type(3n),
-.luxury-app section > div > div:nth-of-type(3n) {
+.luxury-app article:not(.organic-stat-card):not(.organic-stage-card):not(.organic-pillar-card):nth-of-type(3n),
+.luxury-app section > div > div:not([class*="organic-"]):nth-of-type(3n) {
   border-radius: var(--radius-organic-c);
 }
 
@@ -798,48 +784,31 @@ body::before {
 }
 
 .luxury-app .organic-section-shell:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow:
-    0 22px 52px rgba(100, 60, 20, 0.12),
-    0 0 0 1px rgba(196, 113, 74, 0.1);
-  border-color: rgba(107, 66, 38, 0.2);
+    0 16px 40px rgba(100, 60, 20, 0.09),
+    0 0 0 1px rgba(196, 113, 74, 0.08);
+  border-color: rgba(107, 66, 38, 0.16);
 }
 
 .luxury-app .organic-section-title {
   position: relative;
   width: fit-content;
   max-width: 100%;
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
 }
 
 .luxury-app .organic-section-title::after {
   content: "";
   display: block;
-  margin-top: 0.4rem;
-  height: 3px;
-  width: min(7rem, 42%);
+  margin-top: 0.35rem;
+  height: 2px;
+  width: min(5rem, 36%);
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--earth-primary), rgba(61, 122, 106, 0.55), transparent);
-  opacity: 0.9;
-}
-
-.luxury-app .organic-blob-divider {
-  position: relative;
-  isolation: isolate;
-}
-
-.luxury-app .organic-blob-divider::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.55) 48%, transparent 100%);
-  animation: organic-blob-shine 5.5s ease-in-out infinite;
-  mix-blend-mode: soft-light;
-}
-
-.luxury-app .organic-blob-path {
-  stroke-dasharray: 80 1200;
-  animation: organic-blob-dash 16s linear infinite;
+  background: linear-gradient(90deg, var(--earth-primary), rgba(61, 122, 106, 0.45), transparent);
+  opacity: 0.75;
 }
 
 .luxury-app .organic-stat-chip {
@@ -850,19 +819,16 @@ body::before {
 }
 
 .luxury-app .organic-stat-chip:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 32px rgba(30, 42, 36, 0.1);
-  border-color: rgba(196, 113, 74, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(30, 42, 36, 0.08);
+  border-color: rgba(196, 113, 74, 0.18);
 }
 
 .luxury-app .organic-stat-chip .organic-stat-value {
-  transition:
-    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.26s ease;
+  transition: color 0.22s ease;
 }
 
 .luxury-app .organic-stat-chip:hover .organic-stat-value {
-  transform: scale(1.03);
   color: var(--earth-primary);
 }
 
@@ -873,41 +839,17 @@ body::before {
     border-color 0.3s ease;
 }
 
-.luxury-app .organic-stat-card::after {
-  content: "";
-  position: absolute;
-  inset: -40% -30%;
-  background: linear-gradient(
-    125deg,
-    transparent 36%,
-    rgba(255, 255, 255, 0.55) 48%,
-    transparent 58%
-  );
-  opacity: 0;
-  transform: translateX(-18%) rotate(8deg);
-  transition: opacity 0.45s ease;
-  pointer-events: none;
-}
-
 .luxury-app .organic-stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 44px rgba(100, 60, 20, 0.14);
-  border-color: rgba(196, 113, 74, 0.28);
-}
-
-.luxury-app .organic-stat-card:hover::after {
-  opacity: 0.55;
-  animation: organic-stat-sheen 1.1s ease forwards;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(100, 60, 20, 0.1);
+  border-color: rgba(196, 113, 74, 0.22);
 }
 
 .luxury-app .organic-stat-card .organic-stat-value {
-  transition:
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.28s ease;
+  transition: color 0.22s ease;
 }
 
 .luxury-app .organic-stat-card:hover .organic-stat-value {
-  transform: scale(1.04);
   color: var(--earth-primary);
 }
 
@@ -919,59 +861,29 @@ body::before {
 }
 
 .luxury-app .organic-pillar-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 42px rgba(30, 42, 36, 0.12);
-  border-color: rgba(61, 122, 106, 0.22);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(30, 42, 36, 0.09);
+  border-color: rgba(61, 122, 106, 0.18);
 }
 
 .luxury-app .organic-pillar-card .organic-pillar-step {
   display: inline-block;
-  transition: transform 0.28s ease, color 0.28s ease;
+  transition: color 0.22s ease;
 }
 
 .luxury-app .organic-pillar-card:hover .organic-pillar-step {
-  transform: scale(1.06);
-  color: var(--earth-primary-bright);
+  color: var(--earth-primary);
 }
 
-@keyframes organic-blob-shine {
-  0%,
-  100% {
-    opacity: 0.15;
-    transform: translateX(-12%);
-  }
-  50% {
-    opacity: 0.55;
-    transform: translateX(12%);
-  }
+.luxury-app .organic-pillar-card h3 {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
-@keyframes organic-blob-dash {
-  to {
-    stroke-dashoffset: -1280;
-  }
-}
-
-@keyframes organic-stat-sheen {
-  from {
-    transform: translateX(-22%) rotate(8deg);
-  }
-  to {
-    transform: translateX(18%) rotate(8deg);
-  }
+.luxury-app .organic-stage-card h3 {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .luxury-app .organic-blob-path,
-  .luxury-app .organic-blob-divider::after {
-    animation: none !important;
-  }
-
-  .luxury-app .organic-stat-card:hover::after {
-    animation: none !important;
-    opacity: 0 !important;
-  }
-
   .luxury-app .organic-section-shell:hover,
   .luxury-app .organic-stat-card:hover,
   .luxury-app .organic-pillar-card:hover,
@@ -1006,9 +918,7 @@ body::before {
   .organic-page-alerts .route-illustration-spark,
   .organic-page-alerts .route-illustration-bell-cluster,
   .organic-page-alerts .route-illustration-bell-dot,
-  .luxury-app .botanical-flourish-stroke,
-  .luxury-app .organic-stat-spark-path,
-  .luxury-app .organic-hero-spark-path {
+  .luxury-app .botanical-flourish-stroke {
     animation: none !important;
   }
 }

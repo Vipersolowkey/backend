@@ -38,7 +38,8 @@ from app.services.guest_advisor import (
     prepare_guest_chat_context,
 )
 from app.services.llm import stream_text
-from app.services.pricing_simulation_ai import generate_pricing_simulation
+from app.services.pricing_log import log_pricing_decision
+from app.services.pricing_simulation_ai import _resolve_room_type, generate_pricing_simulation
 from app.services.revenue_manager_ai import generate_revenue_manager_brief
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -62,14 +63,34 @@ def pricing_simulation(
     payload: PricingSimulationRequest,
     db: Session = Depends(get_db),
 ) -> PricingSimulationResponse:
-    return PricingSimulationResponse(
-        **generate_pricing_simulation(
-            db=db,
-            area_name=payload.area_name,
-            room_type=payload.room_type,
-            scenario_input=payload.scenario_input,
-        )
+    result = generate_pricing_simulation(
+        db=db,
+        area_name=payload.area_name,
+        room_type=payload.room_type,
+        scenario_input=payload.scenario_input,
+        demand_scenario=payload.demand_scenario,
+        property_id=payload.property_id,
     )
+    rt = _resolve_room_type(db, payload.room_type)
+    log_pricing_decision(
+        db,
+        source="pricing_simulation",
+        property_id=payload.property_id,
+        room_id=None,
+        room_type_id=rt.id,
+        target_date=None,
+        raw_price=rt.base_price,
+        final_price=None,
+        scenario_label=payload.scenario_input[:480],
+        demand_scenario=payload.demand_scenario,
+        applied_rules=[],
+        context={
+            "model_used": result.get("model_used"),
+            "grounding_keys": list((result.get("data_grounding") or {}).keys()),
+        },
+    )
+    db.commit()
+    return PricingSimulationResponse(**result)
 
 
 @router.post("/competitor-insights", response_model=CompetitorInsightResponse)

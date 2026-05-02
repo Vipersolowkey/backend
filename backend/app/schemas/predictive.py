@@ -1,13 +1,17 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DynamicPriceResponse(BaseModel):
     room_id: int
     target_date: date
     recommended_price: Decimal
+    raw_model_price: Decimal | None = None
+    applied_rules: list[str] = Field(default_factory=list)
+    competitor_avg_nightly: Decimal | None = None
+    occupancy_rate_room_type: Decimal | None = None
 
 
 class CancellationPredictionRequest(BaseModel):

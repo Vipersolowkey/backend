@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
 from app.models.competitor_data import CompetitorData
+from app.models.property_ops import Property
 from app.models.pms import Booking, Room, RoomType
+from app.services.price_rules import clamp_price
 
 
 ACTIVE_BOOKING_STATUSES = {"confirmed", "booked", "checked_in"}
@@ -88,56 +90,85 @@ def _avg_competitor_price(rows: list[CompetitorData]) -> Decimal | None:
     return sum(prices) / Decimal(len(prices))
 
 
-def calculate_dynamic_price(
+def _resolve_area_name(db: Session, room: Room, area_name: str | None) -> str:
+    if area_name:
+        return area_name
+    prop = db.get(Property, room.property_id)
+    return prop.area_name if prop else "Nha Trang"
+
+
+def calculate_dynamic_price_detail(
     room_id: int,
     target_date: date,
     db: Session | None = None,
-    area_name: str = "Nha Trang",
-) -> Decimal:
+    area_name: str | None = None,
+) -> dict:
     """
-    Increase price by 15% when the latest competitor market is expensive and tight.
-
-    Logic:
-    - Compute occupancy for the target room type on the target date.
-    - Pull the latest competitor snapshots for the same area.
-    - If competitor average price is above the room type base price and at least half of
-      competitors show low availability, increase base price by 15%.
+    Raw model price from competitor + occupancy rules, then clamped by RoomTypePriceRule (audit).
     """
-
     owns_session = db is None
     db = db or SessionLocal()
 
     try:
-        _, room_type = _get_room_context(db, room_id)
+        room, room_type = _get_room_context(db, room_id)
+        resolved_area = _resolve_area_name(db, room, area_name)
         base_price = _normalize_decimal(room_type.base_price, fallback="100.00")
         occupancy_rate = _calculate_room_type_occupancy(db, room_type.id, target_date)
-        competitor_rows = _latest_competitor_rows(db, area_name)
+        competitor_rows = _latest_competitor_rows(db, resolved_area)
 
-        if not competitor_rows:
-            return base_price.quantize(Decimal("0.01"))
+        competitor_avg_price: Decimal | None = None
+        low_availability_ratio = Decimal("0")
+        should_increase = False
 
-        competitor_avg_price = _avg_competitor_price(competitor_rows)
-        low_availability_count = sum(1 for row in competitor_rows if _has_low_availability(row.availability_status))
-        low_availability_ratio = Decimal(low_availability_count) / Decimal(len(competitor_rows))
+        if competitor_rows:
+            competitor_avg_price = _avg_competitor_price(competitor_rows)
+            low_availability_count = sum(1 for row in competitor_rows if _has_low_availability(row.availability_status))
+            low_availability_ratio = Decimal(low_availability_count) / Decimal(len(competitor_rows))
 
-        should_increase = (
-            competitor_avg_price is not None
-            and competitor_avg_price >= base_price * Decimal("1.05")
-            and low_availability_ratio >= Decimal("0.50")
-            and occupancy_rate >= Decimal("0.60")
-        )
+            should_increase = (
+                competitor_avg_price is not None
+                and competitor_avg_price >= base_price * Decimal("1.05")
+                and low_availability_ratio >= Decimal("0.50")
+                and occupancy_rate >= Decimal("0.60")
+            )
 
-        final_price = base_price * Decimal("1.15") if should_increase else base_price
-        return final_price.quantize(Decimal("0.01"))
+        raw_final = base_price * Decimal("1.15") if should_increase else base_price
+        raw_final = raw_final.quantize(Decimal("0.01"))
+
+        clamped, rule_notes = clamp_price(db, room_type.id, raw_final)
+
+        return {
+            "recommended_price": clamped,
+            "raw_model_price": raw_final,
+            "base_price": base_price.quantize(Decimal("0.01")),
+            "property_id": room.property_id,
+            "room_type_id": room_type.id,
+            "area_name": resolved_area,
+            "occupancy_rate_room_type": occupancy_rate.quantize(Decimal("0.0001")),
+            "competitor_avg_nightly": competitor_avg_price.quantize(Decimal("0.01")) if competitor_avg_price else None,
+            "competitor_rows_used": len(competitor_rows),
+            "low_availability_ratio": low_availability_ratio.quantize(Decimal("0.0001")),
+            "applied_rules": rule_notes,
+            "model_boost_applied": should_increase,
+        }
     finally:
         if owns_session:
             db.close()
 
 
+def calculate_dynamic_price(
+    room_id: int,
+    target_date: date,
+    db: Session | None = None,
+    area_name: str | None = None,
+) -> Decimal:
+    return calculate_dynamic_price_detail(room_id, target_date, db=db, area_name=area_name)["recommended_price"]
+
+
 def predict_cancellation_risk(
     booking_data: dict,
     db: Session | None = None,
-    area_name: str = "Nha Trang",
+    area_name: str | None = None,
 ) -> dict:
     """
     Heuristic cancellation prediction driven by competitor pricing.
@@ -167,8 +198,9 @@ def predict_cancellation_risk(
         booked_nightly_rate = total_price / Decimal(stay_nights)
 
         room, room_type = _get_room_context(db, room_id)
+        resolved_area = _resolve_area_name(db, room, area_name)
         occupancy_rate = _calculate_room_type_occupancy(db, room_type.id, check_in)
-        competitor_rows = _latest_competitor_rows(db, area_name)
+        competitor_rows = _latest_competitor_rows(db, resolved_area)
         competitor_avg_price = _avg_competitor_price(competitor_rows)
 
         if competitor_avg_price is None:

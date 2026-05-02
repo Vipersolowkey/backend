@@ -39,40 +39,6 @@ function OrganicMainWatermark() {
   );
 }
 
-function sparkVariantFromLabel(label) {
-  const key = String(label || "").length % 3;
-  return key === 0 ? "a" : key === 1 ? "b" : "c";
-}
-
-function DecorativeSparkline({ label, compact }) {
-  const variant = sparkVariantFromLabel(label);
-  const paths = {
-    a: "M2 22 C18 10 28 26 42 14 S72 24 88 8 S108 20 118 6",
-    b: "M2 18 C22 28 36 6 52 16 S78 4 96 14 S112 22 118 8",
-    c: "M2 12 C16 22 34 8 50 18 S74 10 92 20 S108 12 118 16",
-  };
-  const d = paths[variant] || paths.a;
-  const wrapClass = compact
-    ? "organic-hero-spark mt-2 text-[rgba(61,122,106,0.34)] transition-colors duration-300 group-hover:text-[rgba(61,122,106,0.5)]"
-    : "organic-stat-spark mt-4 text-[rgba(61,122,106,0.42)] transition-opacity duration-300 group-hover:text-[rgba(61,122,106,0.58)]";
-  const pathClass = compact ? "organic-hero-spark-path" : "organic-stat-spark-path";
-  return (
-    <div className={wrapClass}>
-      <svg viewBox="0 0 120 30" className={`${compact ? "h-5" : "h-7"} w-full overflow-visible`} aria-hidden>
-        <path
-          className={pathClass}
-          d={d}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={compact ? 1.12 : 1.35}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
-}
-
 function SidebarHealth({ ok, checked }) {
   if (!checked) {
     return (
@@ -172,6 +138,27 @@ function SidebarNavIcon({ name }) {
           />
         </svg>
       );
+    case "calendar":
+      return (
+        <svg {...svgProps}>
+          <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.65" />
+          <path d="M8 3v4M16 3v4M4 11h16" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+        </svg>
+      );
+    case "reports":
+      return (
+        <svg {...svgProps}>
+          <path d="M7 4h10v16H7z" stroke="currentColor" strokeWidth="1.65" strokeLinejoin="round" />
+          <path d="M9 8h6M9 12h6M9 16h4" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" />
+        </svg>
+      );
+    case "guests":
+      return (
+        <svg {...svgProps}>
+          <circle cx="12" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.65" />
+          <path d="M6 19c0-3.5 3-5 6-5s6 1.5 6 5" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -217,17 +204,10 @@ export function BotanicalFlourish({ className = "" }) {
 
 export function BlobDivider() {
   return (
-    <div className="organic-blob-divider overflow-hidden rounded-[28px] border border-[rgba(107,66,38,0.12)] bg-[rgba(255,255,255,0.44)] p-2">
-      <svg viewBox="0 0 1200 90" className="organic-blob-svg h-16 w-full text-[rgba(196,113,74,0.5)]" fill="none" aria-hidden="true">
-        <path
-          className="organic-blob-path"
-          d="M10 58C78 16 154 22 222 44C296 68 362 80 444 62C520 46 586 10 658 12C746 16 790 72 888 76C988 80 1068 18 1190 42"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
+    <div
+      className="organic-section-divider my-2 h-px w-full shrink-0 bg-gradient-to-r from-transparent via-[rgba(107,66,38,0.12)] to-transparent"
+      aria-hidden
+    />
   );
 }
 
@@ -395,6 +375,9 @@ function renderIllustration(illustration, variant = "hero") {
 export function OrganicLayout({ pageKey, hero, children, sideArtwork = true }) {
   const navItems = [
     { key: "overview", label: "Overview", path: "/overview" },
+    { key: "calendar", label: "Calendar", path: "/calendar" },
+    { key: "reports", label: "Reports", path: "/reports" },
+    { key: "guests", label: "Guests CRM", path: "/guests" },
     { key: "sales-ai", label: "Sales AI", path: "/sales-ai" },
     { key: "competitors", label: "Competitors", path: "/competitors" },
     { key: "alerts", label: "Alerts", path: "/alerts" },
@@ -498,23 +481,24 @@ export function OrganicPageHero({ eyebrow, title, description, stats, note, illu
       <div className="organic-hero-grid relative grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-end">
         <div className="organic-hero-copy grid gap-5">
           {eyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-[var(--earth-primary)]">{eyebrow}</p>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-[var(--earth-primary)]">{eyebrow}</p>
           ) : null}
           <h1 className="text-gradient-hero max-w-4xl text-[clamp(2.5rem,5vw,4.75rem)] leading-[0.98]">{title}</h1>
           {description ? (
             <p className="max-w-2xl text-base leading-8 text-[var(--earth-text-muted)]">{description}</p>
           ) : null}
-          <div className="organic-hero-stats flex flex-wrap gap-3">
+          <div className="organic-hero-stats flex flex-wrap gap-2.5 sm:gap-3">
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="group organic-stat-chip min-w-[148px] rounded-[24px] border border-[rgba(30,42,36,0.08)] bg-[rgba(255,255,255,0.72)] px-5 py-4 shadow-[0_8px_24px_rgba(30,42,36,0.06)] backdrop-blur-sm"
+                className="group organic-stat-chip max-w-full min-w-0 shrink-0 rounded-2xl border border-[rgba(30,42,36,0.08)] bg-[rgba(255,255,255,0.78)] px-4 py-3 shadow-[0_6px_20px_rgba(30,42,36,0.05)] backdrop-blur-sm sm:min-w-[140px] sm:px-5 sm:py-3.5"
               >
-                <p className="text-xs uppercase tracking-[0.22em] text-[var(--earth-text-subtle)]">{stat.label}</p>
-                <p className="organic-stat-value mt-2 font-['Fraunces',serif] text-2xl font-semibold tracking-tight text-[var(--earth-secondary)]">
+                <p className="text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-[var(--earth-text-subtle)]">
+                  {stat.label}
+                </p>
+                <p className="organic-stat-value mt-1.5 text-xl font-semibold tabular-nums tracking-tight text-[var(--earth-secondary)] sm:text-[1.375rem]">
                   {stat.value}
                 </p>
-                <DecorativeSparkline label={stat.label} compact />
               </div>
             ))}
           </div>
@@ -530,16 +514,18 @@ export function OrganicPageHero({ eyebrow, title, description, stats, note, illu
 
 export function OrganicSection({ eyebrow, title, description, action, children }) {
   return (
-    <section className="page-enter organic-section-shell relative grid gap-6 overflow-hidden rounded-[40px_20px_42px_18px] border border-[rgba(107,66,38,0.14)] bg-[linear-gradient(180deg,rgba(255,255,255,0.52),rgba(240,231,220,0.88))] p-6 shadow-[0_16px_38px_rgba(100,60,20,0.1)] sm:p-8">
+    <section className="page-enter organic-section-shell relative grid gap-5 overflow-hidden rounded-[40px_20px_42px_18px] border border-[rgba(107,66,38,0.12)] bg-[linear-gradient(180deg,rgba(255,255,255,0.55),rgba(240,231,220,0.82))] p-6 shadow-[0_12px_32px_rgba(100,60,20,0.08)] sm:gap-6 sm:p-8">
       <div className="organic-section-ribbon pointer-events-none" aria-hidden />
-      <div className="organic-section-head grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div className="grid gap-3">
+      <div className="organic-section-head grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end lg:gap-6">
+        <div className="grid gap-2">
           {eyebrow ? (
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[var(--earth-primary)]">{eyebrow}</p>
+            <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-[var(--earth-primary)]">{eyebrow}</p>
           ) : null}
-          <h2 className="organic-section-title text-[clamp(1.8rem,3vw,3rem)] text-[var(--earth-secondary)]">{title}</h2>
+          <h2 className="organic-section-title text-[clamp(1.5rem,2.6vw,2.25rem)] font-semibold leading-snug text-[var(--earth-secondary)]">
+            {title}
+          </h2>
           {description ? (
-            <p className="max-w-3xl text-sm leading-7 text-[var(--earth-text-muted)]">{description}</p>
+            <p className="max-w-3xl text-sm leading-relaxed text-[var(--earth-text-muted)]">{description}</p>
           ) : null}
         </div>
         {action}
@@ -552,13 +538,13 @@ export function OrganicSection({ eyebrow, title, description, action, children }
 
 export function OrganicStatCard({ label, value, hint }) {
   return (
-    <article className="organic-stat-card group relative overflow-hidden rounded-[32px_18px_34px_20px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.58)] p-5 shadow-[0_16px_34px_rgba(100,60,20,0.12)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-r from-[rgba(196,113,74,0.18)] to-[rgba(143,175,143,0.06)] transition-opacity duration-300 group-hover:opacity-90" />
-      <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--earth-primary)]">{label}</p>
-        <p className="organic-stat-value mt-3 text-3xl font-semibold tracking-tight text-[var(--earth-secondary)]">{value}</p>
-        {hint ? <p className="mt-2 text-sm text-[var(--earth-text-subtle)]">{hint}</p> : null}
-        <DecorativeSparkline label={label} compact={false} />
+    <article className="organic-stat-card group relative isolate flex min-h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-[rgba(107,66,38,0.11)] bg-[rgba(255,255,255,0.72)] p-5 shadow-[0_8px_28px_rgba(100,60,20,0.07)] sm:rounded-[28px_16px_30px_18px] sm:p-6">
+      <div className="relative flex min-w-0 flex-1 flex-col gap-1">
+        <p className="text-[0.6875rem] font-medium uppercase tracking-[0.1em] text-[var(--earth-text-subtle)]">{label}</p>
+        <p className="organic-stat-value break-words text-[1.625rem] font-semibold leading-tight tracking-tight text-[var(--earth-secondary)] tabular-nums sm:text-[1.75rem]">
+          {value}
+        </p>
+        {hint ? <p className="mt-2 text-xs leading-snug text-[var(--earth-text-muted)]">{hint}</p> : null}
       </div>
     </article>
   );
@@ -566,14 +552,14 @@ export function OrganicStatCard({ label, value, hint }) {
 
 export function OrganicStageCard({ step, title, detail, isLast }) {
   return (
-    <article className="organic-stage-card hover-glow relative grid gap-3 rounded-[32px_18px_36px_22px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.56)] py-6 pl-[3.25rem] pr-6 md:pl-[3.75rem]">
+    <article className="organic-stage-card hover-glow relative grid gap-2 rounded-[28px_16px_32px_18px] border border-[rgba(107,66,38,0.11)] bg-[rgba(255,255,255,0.65)] py-5 pl-[3rem] pr-5 md:pl-[3.5rem] md:pr-6">
       <div className="organic-stage-rail" aria-hidden="true">
         <span className="organic-stage-dot" />
         {isLast ? null : <span className="organic-stage-line" />}
       </div>
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--earth-primary)]">Step {step}</p>
-      <h3 className="text-[clamp(1.35rem,2vw,1.9rem)] text-[var(--earth-secondary)]">{title}</h3>
-      {detail ? <p className="text-sm leading-7 text-[var(--earth-text-muted)]">{detail}</p> : null}
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-[var(--earth-text-subtle)]">Step {step}</p>
+      <h3 className="text-lg font-semibold leading-snug text-[var(--earth-secondary)] md:text-[1.25rem]">{title}</h3>
+      {detail ? <p className="text-sm leading-relaxed text-[var(--earth-text-muted)]">{detail}</p> : null}
     </article>
   );
 }

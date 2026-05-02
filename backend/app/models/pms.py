@@ -32,6 +32,7 @@ class Room(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     room_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     room_type_id: Mapped[int] = mapped_column(ForeignKey("room_types.id"), nullable=False, index=True)
+    property_id: Mapped[int] = mapped_column(ForeignKey("properties.id"), nullable=False, index=True, default=1)
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="available")
 
     room_type: Mapped[RoomType] = relationship()

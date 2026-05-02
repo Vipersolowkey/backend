@@ -1,3 +1,6 @@
+from zoneinfo import ZoneInfo
+
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +17,18 @@ from app.models import (  # noqa: F401
     Room,
     RoomType,
 )
+from app.models.property_ops import (  # noqa: F401
+    AlertThreshold,
+    GuestNote,
+    GuestTag,
+    GuestTimelineEvent,
+    PricingDecisionLog,
+    Property,
+    RoomTypePriceRule,
+    ThresholdNotifyDedupe,
+)
+
+_scheduler: BackgroundScheduler | None = None
 
 
 def create_app() -> FastAPI:
@@ -29,7 +44,51 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def on_startup() -> None:
+        global _scheduler
         Base.metadata.create_all(bind=engine)
+        if not settings.automation_enabled:
+            return
+        try:
+            tz = ZoneInfo(settings.automation_timezone)
+        except Exception:
+            tz = ZoneInfo("UTC")
+        from app.db.session import SessionLocal
+        from app.services.automation_runner import run_scheduled_digest, run_scheduled_threshold_evaluation
+
+        def digest_job() -> None:
+            db = SessionLocal()
+            try:
+                run_scheduled_digest(db)
+            finally:
+                db.close()
+
+        def eval_job() -> None:
+            db = SessionLocal()
+            try:
+                run_scheduled_threshold_evaluation(db)
+            finally:
+                db.close()
+
+        _scheduler = BackgroundScheduler(timezone=tz)
+        _scheduler.add_job(
+            digest_job,
+            "cron",
+            hour=int(settings.automation_digest_cron_hour),
+            minute=int(settings.automation_digest_cron_minute),
+        )
+        _scheduler.add_job(
+            eval_job,
+            "interval",
+            minutes=max(5, int(settings.automation_eval_interval_minutes)),
+        )
+        _scheduler.start()
+
+    @app.on_event("shutdown")
+    def on_shutdown() -> None:
+        global _scheduler
+        if _scheduler is not None:
+            _scheduler.shutdown(wait=False)
+            _scheduler = None
 
     @app.get("/health")
     def health() -> dict:

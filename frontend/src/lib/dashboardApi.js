@@ -26,7 +26,15 @@ export const sourceOptions = [
   { label: "Booking", value: "booking_json_import" },
 ];
 
-export const cityOptions = ["Nha Trang", "Hanoi", "Da Nang"];
+export const cityOptions = ["Nha Trang", "Đà Lạt", "Hanoi", "Da Nang"];
+
+export const demandScenarioOptions = [
+  { label: "Baseline", value: "baseline" },
+  { label: "Holiday peak", value: "holiday_peak" },
+  { label: "Low season", value: "low_season" },
+  { label: "Rainy week", value: "rainy_week" },
+  { label: "Major event", value: "major_event" },
+];
 
 export const sortOptions = [
   { label: "Most Reviews", value: "reviews_desc" },
@@ -48,6 +56,52 @@ export const fallbackMonthlyRevenue = {
   averageStayNights: 4.04,
   growthPercent: 18.6,
 };
+
+/** When API omits `operational_pulse` (older backend). */
+export const fallbackOperationalPulse = {
+  asOfDate: null,
+  totalRooms: 0,
+  occupiedRoomsTonight: 0,
+  occupancyPctTonight: 0,
+  arrivalsNext7Days: 0,
+  departuresNext7Days: 0,
+  futureCheckInsNext30Days: 0,
+};
+
+/** When API omits comparison blocks (older backend). */
+export const fallbackPeriodComparison = null;
+
+function mapPeriodComparison(pcRaw) {
+  if (!pcRaw) return null;
+  return {
+    granularity: pcRaw.granularity ?? "rolling_7d",
+    asOfDate: pcRaw.as_of_date ?? null,
+    currentLabel: pcRaw.current_label ?? "",
+    previousLabel: pcRaw.previous_label ?? "",
+    currentStart: pcRaw.current_start ?? null,
+    currentEnd: pcRaw.current_end ?? null,
+    previousStart: pcRaw.previous_start ?? null,
+    previousEnd: pcRaw.previous_end ?? null,
+    arrivalsCurrent: Number(pcRaw.arrivals_current ?? 0),
+    arrivalsPrevious: Number(pcRaw.arrivals_previous ?? 0),
+    arrivalsChangePct:
+      pcRaw.arrivals_change_pct === null || pcRaw.arrivals_change_pct === undefined
+        ? null
+        : Number(pcRaw.arrivals_change_pct),
+    departuresCurrent: Number(pcRaw.departures_current ?? 0),
+    departuresPrevious: Number(pcRaw.departures_previous ?? 0),
+    departuresChangePct:
+      pcRaw.departures_change_pct === null || pcRaw.departures_change_pct === undefined
+        ? null
+        : Number(pcRaw.departures_change_pct),
+    checkInRevenueCurrent: Number(pcRaw.check_in_revenue_current ?? 0),
+    checkInRevenuePrevious: Number(pcRaw.check_in_revenue_previous ?? 0),
+    revenueChangePct:
+      pcRaw.revenue_change_pct === null || pcRaw.revenue_change_pct === undefined
+        ? null
+        : Number(pcRaw.revenue_change_pct),
+  };
+}
 
 /** When API omits `priorities` (older backend). */
 export const fallbackOperationalPriorities = [
@@ -567,8 +621,12 @@ async function jsonRequest(path, payload) {
   return response.json();
 }
 
-export async function fetchDashboard() {
-  const response = await fetch(`${API_BASE_URL}/dashboard`);
+export async function fetchDashboard(propertyId = null) {
+  const q =
+    propertyId !== null && propertyId !== undefined && propertyId !== ""
+      ? `?property_id=${encodeURIComponent(propertyId)}`
+      : "";
+  const response = await fetch(`${API_BASE_URL}/dashboard${q}`);
   if (!response.ok) throw new Error("Failed to load dashboard.");
   const payload = await response.json();
   const rawPriorities = Array.isArray(payload.priorities) ? payload.priorities : null;
@@ -581,7 +639,25 @@ export async function fetchDashboard() {
       suggestedAction: row.suggested_action,
       routeHint: row.route_hint || null,
     })) ?? null;
+  const scope = payload.property_scope || null;
+  const pulseRaw = payload.operational_pulse;
+  const operationalPulse = pulseRaw
+    ? {
+        asOfDate: pulseRaw.as_of_date ?? null,
+        totalRooms: Number(pulseRaw.total_rooms ?? 0),
+        occupiedRoomsTonight: Number(pulseRaw.occupied_rooms_tonight ?? 0),
+        occupancyPctTonight: Number(pulseRaw.occupancy_pct_tonight ?? 0),
+        arrivalsNext7Days: Number(pulseRaw.arrivals_next_7_days ?? 0),
+        departuresNext7Days: Number(pulseRaw.departures_next_7_days ?? 0),
+        futureCheckInsNext30Days: Number(pulseRaw.future_check_ins_next_30_days ?? 0),
+      }
+    : fallbackOperationalPulse;
+  const periodComparison = mapPeriodComparison(payload.period_comparison) ?? fallbackPeriodComparison;
+  const calendarWeekComparison =
+    mapPeriodComparison(payload.calendar_week_comparison) ?? fallbackPeriodComparison;
+  const pipelineComparison = mapPeriodComparison(payload.pipeline_comparison) ?? fallbackPeriodComparison;
   return {
+    propertyScope: scope ? { id: scope.id, name: scope.name, areaName: scope.area_name } : null,
     monthlyRevenue: {
       monthLabel: payload.monthly_revenue.month_label,
       totalRevenue: Number(payload.monthly_revenue.total_revenue),
@@ -589,6 +665,10 @@ export async function fetchDashboard() {
       averageStayNights: Number(payload.monthly_revenue.average_stay_nights),
       growthPercent: Number(payload.monthly_revenue.growth_percent),
     },
+    operationalPulse,
+    periodComparison,
+    calendarWeekComparison,
+    pipelineComparison,
     alerts: payload.alerts.map((item) => ({
       bookingId: item.booking_id,
       guestName: item.guest_name,
@@ -601,6 +681,64 @@ export async function fetchDashboard() {
     })),
     operationalPriorities: priorities,
   };
+}
+
+export async function fetchProperties() {
+  const response = await fetch(`${API_BASE_URL}/properties`);
+  if (!response.ok) throw new Error("Failed to load properties.");
+  return response.json();
+}
+
+export function reportExportXlsxUrl(propertyId = null) {
+  const q =
+    propertyId !== null && propertyId !== undefined && propertyId !== ""
+      ? `?property_id=${encodeURIComponent(propertyId)}`
+      : "";
+  return `${API_BASE_URL}/reports/export.xlsx${q}`;
+}
+
+export function reportExportCsvUrl(propertyId = null) {
+  const q =
+    propertyId !== null && propertyId !== undefined && propertyId !== ""
+      ? `?property_id=${encodeURIComponent(propertyId)}`
+      : "";
+  return `${API_BASE_URL}/reports/export.csv${q}`;
+}
+
+export async function fetchOccupancyCalendar(year, month, propertyId = null) {
+  const params = new URLSearchParams({ year: String(year), month: String(month) });
+  if (propertyId !== null && propertyId !== undefined && propertyId !== "") {
+    params.set("property_id", String(propertyId));
+  }
+  const response = await fetch(`${API_BASE_URL}/calendar/occupancy?${params.toString()}`);
+  if (!response.ok) throw new Error("Failed to load calendar.");
+  return response.json();
+}
+
+export async function fetchGuestsList(propertyId = null, limit = 50) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (propertyId !== null && propertyId !== undefined && propertyId !== "") {
+    params.set("property_id", String(propertyId));
+  }
+  const response = await fetch(`${API_BASE_URL}/guests?${params.toString()}`);
+  if (!response.ok) throw new Error("Failed to load guests.");
+  return response.json();
+}
+
+export async function fetchGuestCrm(guestId) {
+  const response = await fetch(`${API_BASE_URL}/guests/${guestId}/crm`);
+  if (!response.ok) throw new Error("Failed to load guest CRM.");
+  return response.json();
+}
+
+export async function evaluateAlertThresholds(propertyId = null) {
+  const response = await fetch(`${API_BASE_URL}/alert-thresholds/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ property_id: propertyId }),
+  });
+  if (!response.ok) throw new Error("Evaluate failed.");
+  return response.json();
 }
 
 export const fetchCompetitorInsights = (payload) => jsonRequest("/ai/competitor-insights", payload);

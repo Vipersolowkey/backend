@@ -207,11 +207,19 @@ def _heuristic_brief(data: dict) -> str:
     )
 
 
-def generate_revenue_manager_brief(*, db: Session, area_name: str = "Nha Trang") -> dict[str, str]:
+def generate_revenue_manager_brief(*, db: Session, area_name: str = "Nha Trang") -> dict[str, str | dict]:
     data = _collect_inputs(db, area_name=area_name)
     user_prompt = _build_user_prompt(data)
+    grounding = {
+        "revenue_trend_rows": data["revenue_data"],
+        "occupancy_snapshot": data["occupancy"],
+        "cancellation_aggregate": data["cancellation_rate"],
+        "competitor_snapshot": data["competitor_data"],
+        "upcoming_bookings_sample": data["booking_data"][:8],
+        "note": "LLM/heuristic brief must align with these figures; do not invent hotels or periods outside this snapshot.",
+    }
     try:
         text, model_used = generate_text(user_prompt, REVENUE_MANAGER_SYSTEM)
-        return {"analysis": text.strip(), "model_used": model_used}
+        return {"analysis": text.strip(), "model_used": model_used, "data_grounding": grounding}
     except LlmUnavailableError:
-        return {"analysis": _heuristic_brief(data), "model_used": "heuristic_fallback"}
+        return {"analysis": _heuristic_brief(data), "model_used": "heuristic_fallback", "data_grounding": grounding}
