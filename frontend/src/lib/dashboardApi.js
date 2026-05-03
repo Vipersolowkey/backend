@@ -26,7 +26,13 @@ export const sourceOptions = [
   { label: "Booking", value: "booking_json_import" },
 ];
 
-export const cityOptions = ["Nha Trang", "Đà Lạt", "Hanoi", "Da Nang"];
+/** Labels are English; values match `Property.area_name` in seeded data. */
+export const cityOptions = [
+  { label: "Nha Trang", value: "Nha Trang" },
+  { label: "Da Lat", value: "Đà Lạt" },
+  { label: "Hanoi", value: "Hanoi" },
+  { label: "Da Nang", value: "Da Nang" },
+];
 
 export const demandScenarioOptions = [
   { label: "Baseline", value: "baseline" },

@@ -9,13 +9,13 @@ function formatAmount(amountStr) {
   if (amountStr == null || amountStr === "") return "—";
   const n = Number(amountStr);
   if (Number.isNaN(n)) return amountStr;
-  return n.toLocaleString("vi-VN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
-const HK_VI = {
-  clean: "Sạch / sẵn sàng",
-  dirty: "Cần dọn",
-  in_progress: "Đang dọn",
+const HK_LABELS = {
+  clean: "Clean / ready",
+  dirty: "Needs service",
+  in_progress: "In progress",
 };
 
 export default function GuestAppMe() {
@@ -30,7 +30,7 @@ export default function GuestAppMe() {
 
   const notify = useCallback((msg) => showToast(msg), [showToast]);
 
-  const guestName = session?.guest_name || "Khách";
+  const guestName = session?.guest_name || "Guest";
 
   const openBillPreview = useCallback(async () => {
     setBillLoading(true);
@@ -39,7 +39,7 @@ export default function GuestAppMe() {
       const url = guestAppBillExportUrl(bookingRef);
       const response = await fetch(url);
       const text = await response.text();
-      if (!response.ok) throw new Error(text || "Lỗi tải bill");
+      if (!response.ok) throw new Error(text || "Could not load bill");
       setBillText(text);
     } catch (e) {
       setBillText(String(e?.message || e));
@@ -58,11 +58,11 @@ export default function GuestAppMe() {
         scope: "full_clean",
         notes: hkNotes.trim() || null,
       });
-      notify("Đã gửi yêu cầu dọn phòng tới buồng phòng.");
+      notify("Housekeeping request sent.");
       setHkNotes("");
       await refreshSession();
     } catch (e) {
-      notify(e?.message || "Gửi yêu cầu thất bại.");
+      notify(e?.message || "Request failed.");
     } finally {
       setHkBusy(false);
     }
@@ -78,16 +78,16 @@ export default function GuestAppMe() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f1714] via-[#0f1714]/88 to-[#0f1714]/50" />
         <div className="relative p-4">
-        <p className="text-lg font-semibold text-white">Xin chào, {guestName}</p>
+        <p className="text-lg font-semibold text-white">Hello, {guestName}</p>
         <p className="mt-1 text-sm text-white/60">
-          Phòng {session?.room_number || "—"} · Phụ phí (minibar / giặt / spa):{" "}
+          Room {session?.room_number || "—"} · Extras (minibar / laundry / spa):{" "}
           {session?.folio_extras_total != null ? formatAmount(session.folio_extras_total) : "—"}
         </p>
         <p className="mt-2 text-xs text-white/50">
-          Buồng phòng:{" "}
+          Housekeeping:{" "}
           <span className="font-semibold text-emerald-200/90">
             {session?.housekeeping_room_status
-              ? HK_VI[session.housekeeping_room_status] || session.housekeeping_room_status
+              ? HK_LABELS[session.housekeeping_room_status] || session.housekeeping_room_status
               : "—"}
           </span>
         </p>
@@ -100,15 +100,17 @@ export default function GuestAppMe() {
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/95 to-emerald-950/35" />
         </div>
         <div className="p-4">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-emerald-200/85">Dọn phòng</p>
-        <p className="mt-1 text-xs text-white/55">Gửi yêu cầu dọn / dọn lại phòng của bạn (không xem sơ đồ toàn khách sạn ở đây).</p>
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-emerald-200/85">Housekeeping</p>
+        <p className="mt-1 text-xs text-white/55">
+          Request a full clean or a refresh for your room. (Hotel-wide floor plans are not shown here.)
+        </p>
         <label className="mt-3 block text-xs text-white/55">
-          Ghi chú (tuỳ chọn)
+          Notes (optional)
           <input
             value={hkNotes}
             onChange={(e) => setHkNotes(e.target.value)}
             className="mt-1 w-full rounded-xl border border-white/15 bg-black/25 px-3 py-2 text-sm text-white"
-            placeholder="Ví dụ: dọn sau 14:00…"
+            placeholder="e.g. clean after 2:00 PM…"
           />
         </label>
         <button
@@ -117,7 +119,7 @@ export default function GuestAppMe() {
           onClick={requestHousekeeping}
           className="mt-3 w-full rounded-2xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
         >
-          {hkBusy ? "Đang gửi…" : "Yêu cầu dọn phòng"}
+          {hkBusy ? "Sending…" : "Request housekeeping"}
         </button>
         </div>
       </section>
@@ -128,10 +130,10 @@ export default function GuestAppMe() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0f1714]/95" />
         </div>
         <div className="p-4">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Folio & phụ phí</p>
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Folio & extras</p>
         <ul className="mt-3 space-y-2">
           {lines.length === 0 ? (
-            <li className="text-sm text-white/50">Chưa có dòng phụ phí.</li>
+            <li className="text-sm text-white/50">No folio lines yet.</li>
           ) : (
             lines.map((row) => (
               <li
@@ -153,17 +155,17 @@ export default function GuestAppMe() {
             className="rounded-2xl border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
             onClick={openBillPreview}
           >
-            Xem trước hóa đơn
+            Preview bill
           </button>
           <a
             href={guestAppBillExportUrl(bookingRef)}
             download={`bill-${bookingRef}.txt`}
             className="flex items-center justify-center rounded-2xl bg-emerald-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-500"
           >
-            Tải bill (.txt)
+            Download bill (.txt)
           </a>
         </div>
-        <p className="mt-2 text-[0.65rem] text-white/40">Bill được tạo từ tổng tiền phòng và các dòng folio hiện có.</p>
+        <p className="mt-2 text-[0.65rem] text-white/40">Bill combines room package and current folio lines.</p>
         </div>
       </section>
 
@@ -175,16 +177,16 @@ export default function GuestAppMe() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-rose-950/90 via-rose-950/70 to-transparent" />
         <div className="relative p-4">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-rose-200/90">Ưu đãi cá nhân</p>
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-rose-200/90">Personal touches</p>
         <p className="mt-2 text-sm leading-relaxed text-white/85">
-          Tab Offers lấy gợi ý theo tag CRM (gia đình / anniversary). Ở đây chỉ nhắc minibar quà tặng nếu có trên hồ sơ.
+          The Offers tab uses CRM tags (family, anniversary). Here you can acknowledge an in-room amenity gift.
         </p>
         <button
           type="button"
           className="mt-3 text-sm font-semibold text-rose-200 underline"
-          onClick={() => notify("Đã gửi lời cảm ơn tới concierge.")}
+          onClick={() => notify("Thanks sent to concierge.")}
         >
-          Cảm ơn, tôi đã nhận quà
+          Thanks — I received the gift
         </button>
         </div>
       </section>
@@ -198,24 +200,24 @@ export default function GuestAppMe() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#0f1714]/95 to-[#0f1714]/70" />
         <div className="relative p-4">
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Music (Spotify)</p>
-        <p className="mt-1 text-sm text-white/70">Liên kết Spotify để phát playlist khi vào phòng.</p>
+        <p className="mt-1 text-sm text-white/70">Link Spotify to play a welcome playlist when you enter the room.</p>
         <button
           type="button"
           className="mt-4 w-full rounded-2xl bg-[#1DB954] py-3 text-sm font-semibold text-black hover:brightness-110"
           onClick={() => {
             setSpotifyLinked(true);
-            notify("Đã ghi nhận. Đang mở Spotify…");
+            notify("Saved. Opening Spotify…");
             window.open("https://open.spotify.com/", "_blank", "noopener,noreferrer");
           }}
         >
-          {spotifyLinked ? "Đã liên kết — mở Spotify" : "Liên kết Spotify"}
+          {spotifyLinked ? "Linked — open Spotify" : "Link Spotify"}
         </button>
         </div>
       </section>
 
       <section className="ga-stagger-item rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Cảnh đèn</p>
-        <p className="mt-1 text-xs text-white/55">Đọc sách · Thư giãn · Lãng mạn (lưu trên thiết bị này).</p>
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Lighting scenes</p>
+        <p className="mt-1 text-xs text-white/55">Reading · Relax · Romantic (saved on this device).</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {lightingScenes.map((s) => (
             <button
@@ -223,7 +225,7 @@ export default function GuestAppMe() {
               type="button"
               onClick={() => {
                 setScene(s.id);
-                notify(`Đèn: ${s.label}`);
+                notify(`Lighting: ${s.label}`);
               }}
               className={`guest-app-card-hover flex min-w-[6.5rem] flex-col overflow-hidden rounded-2xl border text-left transition ${
                 scene === s.id
@@ -255,7 +257,7 @@ export default function GuestAppMe() {
           className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-4 sm:items-center"
           role="dialog"
           aria-modal="true"
-          aria-label="Xem trước hóa đơn"
+          aria-label="Bill preview"
         >
           <div className="max-h-[85vh] w-full max-w-md overflow-hidden rounded-3xl border border-white/15 bg-[#0f1714] shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
@@ -265,11 +267,11 @@ export default function GuestAppMe() {
                 className="rounded-full px-3 py-1 text-xs font-semibold text-white/70 hover:bg-white/10"
                 onClick={() => setBillOpen(false)}
               >
-                Đóng
+                Close
               </button>
             </div>
             <pre className="max-h-[65vh] overflow-auto p-4 text-left text-xs leading-relaxed text-emerald-50/90">
-              {billLoading ? "Đang tải…" : billText}
+              {billLoading ? "Loading…" : billText}
             </pre>
           </div>
         </div>

@@ -17,20 +17,20 @@ export function getHotelWeatherCoords() {
   };
 }
 
-/** WMO code → short Vietnamese label */
-export function wmoWeatherLabelVi(code) {
+/** WMO code → short English label */
+export function wmoWeatherLabelEn(code) {
   const c = Number(code);
-  if (c === 0) return "Trời quang";
-  if (c === 1) return "Chủ yếu quang";
-  if (c === 2) return "Ít mây";
-  if (c === 3) return "Nhiều mây";
-  if (c === 45 || c === 48) return "Sương mù";
-  if (c >= 51 && c <= 57) return "Mưa phùn";
-  if (c >= 61 && c <= 67) return "Mưa";
-  if (c >= 71 && c <= 77) return "Tuyết";
-  if (c >= 80 && c <= 82) return "Mưa rào";
-  if (c >= 95 && c <= 99) return "Dông, có sấm sét";
-  return "Thời tiết";
+  if (c === 0) return "Clear sky";
+  if (c === 1) return "Mainly clear";
+  if (c === 2) return "Partly cloudy";
+  if (c === 3) return "Overcast";
+  if (c === 45 || c === 48) return "Fog";
+  if (c >= 51 && c <= 57) return "Drizzle";
+  if (c >= 61 && c <= 67) return "Rain";
+  if (c >= 71 && c <= 77) return "Snow";
+  if (c >= 80 && c <= 82) return "Rain showers";
+  if (c >= 95 && c <= 99) return "Thunderstorm";
+  return "Weather";
 }
 
 export function isRainyWmoCode(code) {
@@ -50,7 +50,7 @@ export function isRainyWmoCode(code) {
  *   windKmh: number,
  *   windDirectionDeg: number,
  *   weatherCode: number,
- *   labelVi: string,
+ *   labelEn: string,
  *   time: string,
  *   placeLabel: string
  * }>}
@@ -74,10 +74,10 @@ export async function fetchCurrentWeather({ signal, latitude, longitude, placeLa
   });
   const url = `https://api.open-meteo.com/v1/forecast?${params}`;
   const res = await fetch(url, { signal });
-  if (!res.ok) throw new Error("Không lấy được thời tiết.");
+  if (!res.ok) throw new Error("Could not load weather.");
   const data = await res.json();
   const cur = data?.current;
-  if (!cur) throw new Error("Thiếu dữ liệu thời tiết.");
+  if (!cur) throw new Error("Weather data is missing.");
   return {
     temperatureC: cur.temperature_2m,
     apparentC: cur.apparent_temperature,
@@ -86,7 +86,7 @@ export async function fetchCurrentWeather({ signal, latitude, longitude, placeLa
     windKmh: cur.windspeed_10m,
     windDirectionDeg: cur.winddirection_10m,
     weatherCode: cur.weather_code,
-    labelVi: wmoWeatherLabelVi(cur.weather_code),
+    labelEn: wmoWeatherLabelEn(cur.weather_code),
     time: cur.time,
     placeLabel,
   };

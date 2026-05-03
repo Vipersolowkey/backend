@@ -1,7 +1,7 @@
 import { isRainyWmoCode } from "./openMeteoWeather";
 
 /**
- * @typedef {{ id: string, labelVi: string, description: string, priceVnd: number, category?: string }} PairingOption
+ * @typedef {{ id: string, labelEn: string, description: string, priceVnd: number, category?: string }} PairingOption
  * @typedef {{ id: string, name: string, pairingOptions?: PairingOption[] }} MenuDish
  */
 
@@ -28,7 +28,7 @@ function folioCategories(folioLines) {
 }
 
 /**
- * Chọn món “neo” để gợi ý add-on (rule đơn giản, có giải thích).
+ * Pick anchor dish for add-on suggestions (simple rules, explainable).
  */
 export function pickAnchorDishId(menu, { hour, weather } = {}) {
   const h = typeof hour === "number" ? hour : new Date().getHours();
@@ -40,7 +40,7 @@ export function pickAnchorDishId(menu, { hour, weather } = {}) {
 }
 
 /**
- * Chọn add-on trong danh sách pairing của món + quy tắc toàn cục.
+ * Pick add-on from dish pairing list + global heuristics.
  */
 function pickPairingOption(dish, ctx) {
   const opts = dish?.pairingOptions || [];
@@ -79,7 +79,7 @@ function pickPairingOption(dish, ctx) {
 /**
  * @param {MenuDish[]} menu
  * @param {string} anchorDishId
- * @param {{ tags?: string[], weather?: object|null, folioLines?: object[] }} ctx
+ * @param {{ tags?: string[], weather?: object|null, folioLines?: object[], hour?: number }} ctx
  */
 export function buildDiningAiSuggestion(menu, anchorDishId, ctx = {}) {
   const dish = menu.find((d) => d.id === anchorDishId) || menu[0];
@@ -94,25 +94,25 @@ export function buildDiningAiSuggestion(menu, anchorDishId, ctx = {}) {
   const pairing = pickPairingOption(dish, { tagsLower, tempC, isRainy, folioCats });
 
   const reasons = [];
-  if (isRainy) reasons.push("trời mưa / ẩm");
-  if (tempC >= 30) reasons.push("nhiệt độ cao");
-  if (hour >= 22 || hour < 6) reasons.push("khung giờ đêm");
-  if (hasTag(tagsLower, "family", "kid")) reasons.push("hồ sơ gia đình");
-  if (hasTag(tagsLower, "anniversary", "honeymoon", "romance")) reasons.push("dịp kỷ niệm");
-  if (folioCats.has("spa")) reasons.push("bạn đã dùng spa gần đây");
-  if (folioCats.has("dining")) reasons.push("đã có món in-room trước đó");
+  if (isRainy) reasons.push("rain / humidity");
+  if (tempC >= 30) reasons.push("high temperature");
+  if (hour >= 22 || hour < 6) reasons.push("late night");
+  if (hasTag(tagsLower, "family", "kid")) reasons.push("family profile");
+  if (hasTag(tagsLower, "anniversary", "honeymoon", "romance")) reasons.push("special occasion");
+  if (folioCats.has("spa")) reasons.push("recent spa folio activity");
+  if (folioCats.has("dining")) reasons.push("prior in-room dining");
 
   let headline = "";
   if (pairing) {
-    headline = `Với «${dish.name}», gợi ý thêm «${pairing.labelVi}» (${pairing.description}).`;
+    headline = `With "${dish.name}", consider adding "${pairing.labelEn}" (${pairing.description}).`;
   } else {
-    headline = `Khám phá thêm món kèm phù hợp với «${dish.name}».`;
+    headline = `Explore add-ons that pair well with "${dish.name}".`;
   }
 
   if (reasons.length) {
-    headline += ` Gợi ý dựa trên: ${reasons.slice(0, 3).join(", ")}.`;
+    headline += ` Based on: ${reasons.slice(0, 3).join(", ")}.`;
   } else {
-    headline += " Gợi ý dựa trên lựa chọn phổ biến của khách tại khách sạn.";
+    headline += " Based on common in-house guest choices.";
   }
 
   return {
@@ -123,7 +123,7 @@ export function buildDiningAiSuggestion(menu, anchorDishId, ctx = {}) {
     addOn: pairing
       ? {
           id: pairing.id,
-          labelVi: pairing.labelVi,
+          labelEn: pairing.labelEn,
           description: pairing.description,
           priceVnd: pairing.priceVnd,
           category: pairing.category || "dining",

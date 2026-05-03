@@ -291,8 +291,8 @@ export default function CompetitorsPage() {
           <div className="flex flex-wrap gap-3">
             <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} className="px-4 py-3 text-sm font-semibold">
               {cityOptions.map((city) => (
-                <option key={city} value={city}>
-                  {city}
+                <option key={city.value} value={city.value}>
+                  {city.label}
                 </option>
               ))}
             </select>

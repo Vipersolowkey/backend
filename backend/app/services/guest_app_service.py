@@ -15,10 +15,10 @@ from app.models.pms import Booking, Guest, Room, RoomType
 from app.models.property_ops import GuestNote, GuestTag, GuestTimelineEvent, Property
 
 STAY_EVENTS = (
-    ("stay_app_checkin_started", "checkin", "Check-in started", "Đang nhận phòng"),
-    ("stay_app_room_ready", "room_ready", "Room ready", "Phòng đã sẵn sàng"),
-    ("stay_app_in_room", "in_room", "In room", "Đã vào phòng"),
-    ("stay_app_checkout_done", "checkout", "Checked out", "Đã trả phòng"),
+    ("stay_app_checkin_started", "checkin", "Check-in started", "Check-in in progress"),
+    ("stay_app_room_ready", "room_ready", "Room ready", "Room is ready"),
+    ("stay_app_in_room", "in_room", "In room", "In room"),
+    ("stay_app_checkout_done", "checkout", "Checked out", "Checked out"),
 )
 
 STEP_TO_EVENT = {row[1]: row[0] for row in STAY_EVENTS}

@@ -4,16 +4,16 @@ import { OrganicLayout, OrganicSection } from "../components/organic/OrganicUI";
 import { fetchProperties } from "../lib/dashboardApi";
 import { guestAppRoomBoard } from "../lib/guestAppApi";
 
-const HK_VI = {
-  clean: "Sạch / sẵn sàng",
-  dirty: "Cần dọn",
-  in_progress: "Đang dọn",
+const HK_LABELS = {
+  clean: "Clean / ready",
+  dirty: "Needs service",
+  in_progress: "In progress",
 };
 
-const STAY_VI = {
-  vacant: "Trống",
-  reserved: "Đã đặt (chưa vào)",
-  occupied: "Đang ở",
+const STAY_LABELS = {
+  vacant: "Vacant",
+  reserved: "Reserved (not in-house)",
+  occupied: "Occupied",
 };
 
 export default function RoomHousekeepingBoardPage() {
@@ -50,7 +50,7 @@ export default function RoomHousekeepingBoardPage() {
       setBoard(data);
     } catch (e) {
       setBoard({ rooms: [] });
-      setBoardError(e?.message || "Không tải được bảng phòng.");
+      setBoardError(e?.message || "Could not load room board.");
     } finally {
       setLoading(false);
     }
@@ -69,17 +69,17 @@ export default function RoomHousekeepingBoardPage() {
     <OrganicLayout
       pageKey="room-board"
       hero={{
-        eyebrow: "Vận hành",
-        title: "Sơ đồ phòng & buồng phòng",
-        description: "Trạng thái lưu trú theo booking và trạng thái dọn phòng (HK) từng phòng — dành cho lễ tân / buồng phòng.",
+        eyebrow: "Operations",
+        title: "Rooms & housekeeping",
+        description: "Stay status by booking and per-room housekeeping — for front desk and housekeeping.",
         stats: [],
         illustration: null,
       }}
     >
-      <OrganicSection eyebrow={null} title="Bộ lọc" description={null}>
+      <OrganicSection eyebrow={null} title="Filters" description={null}>
         <div className="flex flex-wrap items-end gap-4">
           <label className="grid gap-1 text-sm font-semibold text-[var(--earth-secondary)]">
-            Chi nhánh / property
+            Property
             <select
               className="min-w-[240px] px-3 py-2"
               value={propertyId}
@@ -98,19 +98,19 @@ export default function RoomHousekeepingBoardPage() {
             className="rounded-full border border-[rgba(30,42,36,0.12)] bg-[rgba(255,255,255,0.65)] px-4 py-2 text-sm font-semibold text-[var(--earth-secondary)] hover:bg-white"
             onClick={loadBoard}
           >
-            Làm mới
+            Refresh
           </button>
         </div>
         {board.as_of ? (
-          <p className="mt-2 text-xs text-[var(--earth-text-muted)]">Cập nhật: {board.as_of}</p>
+          <p className="mt-2 text-xs text-[var(--earth-text-muted)]">Updated: {board.as_of}</p>
         ) : null}
         {boardError ? <p className="mt-2 text-sm text-amber-800">{boardError}</p> : null}
       </OrganicSection>
 
       <OrganicSection
         eyebrow={null}
-        title="Danh sách phòng"
-        description={loading ? "Đang tải…" : `${rows.length} phòng.`}
+        title="Room list"
+        description={loading ? "Loading…" : `${rows.length} rooms.`}
       >
         <ul className="max-h-[min(70vh,52rem)] space-y-2 overflow-auto pr-1">
           {rows.map((r) => (
@@ -119,19 +119,19 @@ export default function RoomHousekeepingBoardPage() {
               className="rounded-2xl border border-[rgba(30,42,36,0.1)] bg-[rgba(255,255,255,0.72)] px-4 py-3 text-sm shadow-sm"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold text-[var(--earth-secondary)]">Phòng {r.room_number}</span>
+                <span className="font-semibold text-[var(--earth-secondary)]">Room {r.room_number}</span>
                 <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-[var(--earth-text-muted)]">
-                  {STAY_VI[r.stay_state] || r.stay_state}
+                  {STAY_LABELS[r.stay_state] || r.stay_state}
                 </span>
               </div>
               <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--earth-text)]">
                 <span>
-                  HK: <span className="font-medium text-[var(--earth-primary)]">{HK_VI[r.housekeeping_status] || r.housekeeping_status}</span>
+                  HK: <span className="font-medium text-[var(--earth-primary)]">{HK_LABELS[r.housekeeping_status] || r.housekeeping_status}</span>
                 </span>
                 {r.guest_name ? <span className="max-w-[12rem] truncate font-medium">{r.guest_name}</span> : null}
               </div>
               {r.booking_ref ? (
-                <p className="mt-1 text-[0.7rem] font-medium text-[rgba(61,122,106,0.95)]">Mã: {r.booking_ref}</p>
+                <p className="mt-1 text-[0.7rem] font-medium text-[rgba(61,122,106,0.95)]">Ref: {r.booking_ref}</p>
               ) : null}
             </li>
           ))}

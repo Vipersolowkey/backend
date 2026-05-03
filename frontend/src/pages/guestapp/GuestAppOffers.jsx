@@ -63,7 +63,7 @@ export default function GuestAppOffers() {
         if (!cancelled) {
           setSegmentOffers([]);
           setTags([]);
-          setOffersError(e?.message || "Không tải ưu đãi theo segment.");
+          setOffersError(e?.message || "Could not load segment offers.");
         }
       }
     };
@@ -82,16 +82,16 @@ export default function GuestAppOffers() {
     <div className="ga-stagger space-y-4">
       {tags.length ? (
         <p className="text-xs text-emerald-200/80">
-          Tag CRM: <span className="font-semibold text-white">{tags.join(", ")}</span>
+          CRM tags: <span className="font-semibold text-white">{tags.join(", ")}</span>
         </p>
       ) : null}
       {offersError ? <p className="text-xs text-rose-300/90">{offersError}</p> : null}
 
-      <p className="text-sm text-white/65">Ưu đãi theo segment và gợi ý trong kỳ nghỉ.</p>
+      <p className="text-sm text-white/65">Segment offers and in-stay suggestions.</p>
 
       {segmentOffers.length ? (
         <div className="space-y-3">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-emerald-200/75">Theo segment / tag</p>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-emerald-200/75">By segment / tag</p>
           {segmentOffers.map((item) => {
             const coverSrc = segmentOfferImages[item.id] || segmentOfferImages["seg-default"];
             return (
@@ -117,7 +117,7 @@ export default function GuestAppOffers() {
               <button
                 type="button"
                 className="mt-4 w-full rounded-2xl bg-emerald-500 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
-                onClick={() => notify(`Đã chọn: ${item.title}`)}
+                onClick={() => notify(`Selected: ${item.title}`)}
               >
                 {item.cta}
               </button>
@@ -129,7 +129,7 @@ export default function GuestAppOffers() {
       ) : null}
 
       {liveRain ? (
-        <p className="text-[0.65rem] text-sky-200/80">Đang mưa hoặc mưa vừa qua — hiển thị gợi ý ngày mưa bên dưới.</p>
+        <p className="text-[0.65rem] text-sky-200/80">It is raining or has rained recently — rainy-day ideas appear below.</p>
       ) : null}
 
       <div className="space-y-4">
@@ -161,7 +161,7 @@ export default function GuestAppOffers() {
               <button
                 type="button"
                 className="mt-4 w-full rounded-2xl bg-emerald-500 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
-                onClick={() => notify(`Đã chọn: ${item.title}`)}
+                onClick={() => notify(`Selected: ${item.title}`)}
               >
                 {item.cta}
               </button>
@@ -176,15 +176,15 @@ export default function GuestAppOffers() {
           <div className="absolute inset-0 bg-gradient-to-r from-[#0f1714]/95 to-[#0f1714]/40" />
         </div>
         <div className="p-4">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Add-on phòng</p>
-        <p className="mt-1 text-sm text-white/75">Gối lông vũ, tinh dầu, sáng sớm — một chạm.</p>
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Room add-ons</p>
+        <p className="mt-1 text-sm text-white/75">Down pillows, essential oils, early breakfast — one tap.</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {["Gối lông vũ", "Tinh dầu", "Ăn sáng 5:30"].map((label) => (
+          {["Down pillows", "Essential oils", "Breakfast 5:30"].map((label) => (
             <button
               key={label}
               type="button"
               className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/85 hover:bg-white/10"
-              onClick={() => notify(`Đã thêm: ${label}`)}
+              onClick={() => notify(`Added: ${label}`)}
             >
               + {label}
             </button>

@@ -405,7 +405,7 @@ export function OrganicLayout({ pageKey, hero, children, sideArtwork = true }) {
   const navItems = [
     { key: "overview", label: "Overview", path: "/overview" },
     { key: "calendar", label: "Calendar", path: "/calendar" },
-    { key: "room-board", label: "Phòng & HK", path: "/operations/rooms" },
+    { key: "room-board", label: "Rooms & HK", path: "/operations/rooms" },
     { key: "reports", label: "Reports", path: "/reports" },
     { key: "guests", label: "Guests CRM", path: "/guests" },
     { key: "guest-app", label: "Guest app", path: "/guest-app" },

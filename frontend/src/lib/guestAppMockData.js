@@ -83,22 +83,22 @@ export const dineMenu = [
     pairingOptions: [
       {
         id: "fries",
-        labelVi: "Khoai tây chiên giòn",
-        description: "Món kèm — phục vụ phòng",
+        labelEn: "Crispy fries",
+        description: "Side — room service",
         priceVnd: 65000,
         category: "dining",
       },
       {
         id: "kids_juice",
-        labelVi: "Nước ép táo cho trẻ",
-        description: "Ly 250ml, ít đường",
+        labelEn: "Apple juice (kids)",
+        description: "250ml cup, light sugar",
         priceVnd: 55000,
         category: "dining",
       },
       {
         id: "iced_lemongrass",
-        labelVi: "Trà chanh sả đá",
-        description: "Giải nhiệt khi ăn đồ nóng",
+        labelEn: "Iced lemongrass tea",
+        description: "Refreshing with hot dishes",
         priceVnd: 45000,
         category: "dining",
       },
@@ -115,22 +115,22 @@ export const dineMenu = [
     pairingOptions: [
       {
         id: "soft_egg",
-        labelVi: "Trứng lòng đào thêm",
-        description: "Ăn kèm phở",
+        labelEn: "Soft-boiled egg add-on",
+        description: "Classic with pho",
         priceVnd: 15000,
         category: "dining",
       },
       {
         id: "extra_broth",
-        labelVi: "Tô nước dùng thêm",
-        description: "Ấm hơn khi trời mưa",
+        labelEn: "Extra broth bowl",
+        description: "Comforting on rainy days",
         priceVnd: 35000,
         category: "dining",
       },
       {
         id: "iced_lemongrass",
-        labelVi: "Trà chanh sả đá",
-        description: "Cân bằng vị ngọt nước dùng",
+        labelEn: "Iced lemongrass tea",
+        description: "Balances rich broth",
         priceVnd: 45000,
         category: "dining",
       },
@@ -147,22 +147,22 @@ export const dineMenu = [
     pairingOptions: [
       {
         id: "affogato",
-        labelVi: "Shot espresso affogato",
-        description: "Rưới trực tiếp lên tiramisu",
+        labelEn: "Espresso affogato shot",
+        description: "Poured over the tiramisu",
         priceVnd: 45000,
         category: "dining",
       },
       {
         id: "sparkling_split",
-        labelVi: "Prosecco ly (187ml)",
-        description: "Kỷ niệm / buổi tối lãng mạn",
+        labelEn: "Prosecco split (187ml)",
+        description: "Celebration / romantic evening",
         priceVnd: 189000,
         category: "dining",
       },
       {
         id: "iced_lemongrass",
-        labelVi: "Trà chanh sả đá",
-        description: "Nhẹ bụng sau bánh",
+        labelEn: "Iced lemongrass tea",
+        description: "Light finish after dessert",
         priceVnd: 45000,
         category: "dining",
       },
@@ -235,7 +235,7 @@ export const ownerPulseRows = [
 ];
 
 export const ownerPulseKpis = [
-  { label: "In-app upsell (7 days)", value: "51.2M ₫", hint: "+14% vs last week" },
+  { label: "In-app upsell (7 days)", value: "51.2M VND", hint: "+14% vs last week" },
   { label: "Guests opted into notifications", value: "72%", hint: "Push / in-stay opt-in" },
   { label: "In-room dining orders", value: "198", hint: "QR + app + room service" },
 ];

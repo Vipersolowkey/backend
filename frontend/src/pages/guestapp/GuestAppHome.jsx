@@ -9,7 +9,7 @@ function formatShortDate(iso) {
   if (!iso) return "";
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString("vi-VN", { day: "numeric", month: "short" });
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { day: "numeric", month: "short" });
 }
 
 const STEP_ORDER = ["checkin", "room_ready", "in_room", "checkout"];
@@ -36,7 +36,7 @@ export default function GuestAppHome() {
       } catch (e) {
         if (!cancelled) {
           setWeather(null);
-          setWeatherError(e?.message || "Không tải được thời tiết.");
+          setWeatherError(e?.message || "Could not load weather.");
         }
       } finally {
         if (!cancelled) setWeatherLoading(false);
@@ -57,9 +57,9 @@ export default function GuestAppHome() {
       try {
         await guestAppTimelineStep(bookingRef, step);
         await refreshSession();
-        showToast(`Đã cập nhật bước: ${step}`);
+        showToast(`Timeline updated: ${step.replaceAll("_", " ")}`);
       } catch (e) {
-        showToast(e?.message || "Không cập nhật được timeline.");
+        showToast(e?.message || "Could not update timeline.");
       } finally {
         setAdvancing(false);
       }
@@ -95,17 +95,17 @@ export default function GuestAppHome() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f1714] via-[#0f1714]/75 to-[#0f1714]/40" />
         <div className="relative p-4">
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-emerald-200/75">Lưu trú</p>
-        <p className="mt-1 text-lg font-semibold text-white">Phòng {roomLabel}</p>
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-emerald-200/75">Stay overview</p>
+        <p className="mt-1 text-lg font-semibold text-white">Room {roomLabel}</p>
         <p className="mt-0.5 text-sm text-white/60">
-          {formatShortDate(checkIn)} → {formatShortDate(checkOut)} · Mã {refLabel}
+          {formatShortDate(checkIn)} → {formatShortDate(checkOut)} · Booking ref {refLabel}
         </p>
         {session?.property_name ? (
           <p className="mt-1 text-xs text-white/50">{session.property_name}</p>
         ) : null}
 
         <div className="mt-4 space-y-3">
-          <p className="text-xs font-medium text-white/55">Timeline lưu trú</p>
+          <p className="text-xs font-medium text-white/55">Stay timeline</p>
           <ol className="relative space-y-0 border-l border-white/15 pl-4">
             {steps.map((s) => {
               const dot =
@@ -123,21 +123,23 @@ export default function GuestAppHome() {
                     className={`ga-timeline-dot absolute -left-[1.15rem] top-1.5 h-2.5 w-2.5 rounded-full ${dot}`}
                     aria-hidden
                   />
-                  <p className="text-sm font-semibold text-white">{s.label_vi}</p>
-                  <p className="text-[0.65rem] text-white/40">{s.label_en}</p>
+                  <p className="text-sm font-semibold text-white">{s.label_en}</p>
+                  {s.label_vi && s.label_vi !== s.label_en ? (
+                    <p className="text-[0.65rem] text-white/40">{s.label_vi}</p>
+                  ) : null}
                 </li>
               );
             })}
           </ol>
           {sessionLoading && !session ? (
-            <p className="text-xs text-white/50">Đang tải timeline từ booking…</p>
+            <p className="text-xs text-white/50">Loading timeline from booking…</p>
           ) : null}
         </div>
 
         {session && nextStep ? (
           <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
             <p className="text-xs text-white/60">
-              Nhân viên lễ tân có thể đẩy bước tiếp theo tại đây (đồng bộ CRM timeline).
+              Front desk can move the stay to the next step here (synced to the CRM timeline).
             </p>
             <button
               type="button"
@@ -145,7 +147,7 @@ export default function GuestAppHome() {
               className="mt-2 w-full rounded-xl bg-emerald-600/90 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
               onClick={() => advanceStep(nextStep)}
             >
-              {advancing ? "Đang gửi…" : `Tiếp theo → ${nextStep}`}
+              {advancing ? "Sending…" : `Continue to ${String(nextStep).replaceAll("_", " ")}`}
             </button>
           </div>
         ) : null}
@@ -158,16 +160,16 @@ export default function GuestAppHome() {
           <div className="absolute inset-0 bg-gradient-to-t from-emerald-950/95 via-emerald-950/50 to-transparent" />
         </div>
         <div className="p-4">
-        <p className="text-sm font-semibold text-white">Cảm ơn bạn đã đặt phòng!</p>
+        <p className="text-sm font-semibold text-white">Thanks for booking with us!</p>
         <p className="mt-2 text-sm leading-relaxed text-white/75">
-          Đặt trước đưa đón sân bay — đội concierge sẽ đón bạn tại ga.
+          Pre-book airport pickup — our concierge team will meet you at the terminal.
         </p>
         <button
           type="button"
           className="mt-4 w-full rounded-2xl bg-emerald-500 py-3 text-sm font-semibold text-emerald-950 transition hover:bg-emerald-400"
-          onClick={() => notify("Đã ghi nhận — concierge sẽ liên hệ xác nhận.")}
+          onClick={() => notify("Request received. Concierge will confirm with you shortly.")}
         >
-          Đặt đưa đón
+          Book transfer
         </button>
         </div>
       </section>
@@ -182,7 +184,7 @@ export default function GuestAppHome() {
           }`}
           onClick={() => {
             setDoorOpen(true);
-            notify("Đã gửi lệnh mở cửa tới khóa phòng (khi tích hợp hoàn tất).");
+            notify("Unlock request sent to your door lock (demo until hardware is connected).");
           }}
         >
           <img
@@ -193,8 +195,8 @@ export default function GuestAppHome() {
           <div className="absolute inset-0 bg-gradient-to-br from-[#0f1714]/80 to-transparent" />
           <div className="relative">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Mobile key</p>
-          <p className="mt-1 text-base font-semibold text-white">{doorOpen ? "Đã mở" : "Chạm để mở cửa"}</p>
-          <p className="mt-1 text-xs text-white/55">Phòng {roomLabel}</p>
+          <p className="mt-1 text-base font-semibold text-white">{doorOpen ? "Unlocked" : "Tap to unlock"}</p>
+          <p className="mt-1 text-xs text-white/55">Room {roomLabel}</p>
           </div>
         </button>
         <div className="guest-app-card-hover relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-4">
@@ -205,13 +207,13 @@ export default function GuestAppHome() {
           />
           <div className="absolute inset-0 bg-gradient-to-tl from-[#0f1714]/90 to-transparent" />
           <div className="relative">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Thanh toán</p>
-          <p className="mt-1 text-base font-semibold text-white">Minibar & dịch vụ</p>
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Payment</p>
+          <p className="mt-1 text-base font-semibold text-white">Minibar & services</p>
           <p className="mt-1 text-xs text-white/55">
-            Phụ phí: {session?.folio_extras_total != null ? `${session.folio_extras_total}` : "—"} · HK phòng:{" "}
+            Extras: {session?.folio_extras_total != null ? `${session.folio_extras_total}` : "—"} · Housekeeping:{" "}
             {session?.housekeeping_room_status || "—"}
           </p>
-          <p className="mt-2 text-[0.65rem] text-white/45">Chi tiết dòng folio ở tab Me.</p>
+          <p className="mt-2 text-[0.65rem] text-white/45">Itemized charges are on the Me tab.</p>
           </div>
         </div>
       </section>
@@ -222,14 +224,14 @@ export default function GuestAppHome() {
         <div className="relative p-4">
         <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-amber-200/80">Happy hour</p>
         <p className="mt-1 text-sm font-medium text-white">
-          Rooftop — mua một cocktail tặng một; bắt đầu sau một giờ nữa.
+          Rooftop — buy one cocktail, get one free; starts in one hour.
         </p>
         <button
           type="button"
           className="mt-3 rounded-2xl bg-amber-500/90 px-4 py-2.5 text-sm font-semibold text-amber-950 hover:bg-amber-400"
-          onClick={() => notify("Đã gửi yêu cầu giữ chỗ quầy bar.")}
+          onClick={() => notify("Bar seat request sent.")}
         >
-          Giữ chỗ bar
+          Hold bar seats
         </button>
         </div>
       </section>
@@ -244,40 +246,40 @@ export default function GuestAppHome() {
         <div className="relative p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Thời tiết</p>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-white/50">Weather</p>
             {weatherLoading && !weather ? (
-              <p className="mt-1 text-sm text-white/60">Đang tải…</p>
+              <p className="mt-1 text-sm text-white/60">Loading…</p>
             ) : weatherError ? (
               <p className="mt-1 text-sm text-rose-300/90">{weatherError}</p>
             ) : weather ? (
               <>
                 <p className="mt-1 text-sm font-medium text-white">
-                  {weather.placeLabel} · {weather.labelVi}
+                  {weather.placeLabel} · {weather.labelEn}
                 </p>
                 <p className="mt-1 text-lg font-semibold text-emerald-100">
                   {Math.round(weather.temperatureC)}°C
                   <span className="ml-2 text-sm font-normal text-white/55">
-                    cảm giác {Math.round(weather.apparentC)}°C
+                    feels {Math.round(weather.apparentC)}°C
                   </span>
                 </p>
                 <p className="mt-1 text-xs text-white/55">
-                  Độ ẩm {weather.humidityPct}% · Gió {Math.round(weather.windKmh)} km/h
-                  {weather.precipitationMm > 0 ? ` · Mưa gần đây ${weather.precipitationMm} mm` : ""}
+                  Humidity {weather.humidityPct}% · Wind {Math.round(weather.windKmh)} km/h
+                  {weather.precipitationMm > 0 ? ` · Recent rain ${weather.precipitationMm} mm` : ""}
                 </p>
-                <p className="mt-1 text-[0.65rem] text-white/35">Cập nhật: {weather.time} (Open-Meteo)</p>
+                <p className="mt-1 text-[0.65rem] text-white/35">Updated: {weather.time} (Open-Meteo)</p>
               </>
             ) : null}
           </div>
         </div>
         {isRain ? (
           <p className="mt-3 text-sm leading-relaxed text-emerald-100/85">
-            Trời mưa — thưởng thức trà chiều tại lounge hoặc gọi món từ phòng.{" "}
+            Rainy weather — afternoon tea in the lounge or in-room dining.{" "}
             <button
               type="button"
               className="font-semibold text-emerald-300 underline"
-              onClick={() => notify("Đang mở thực đơn ngày mưa trong tab Dine.")}
+              onClick={() => notify("Rainy-day specials are listed under Dine.")}
             >
-              Xem menu
+              View menu
             </button>
           </p>
         ) : null}

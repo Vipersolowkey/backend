@@ -6,20 +6,20 @@ const GuestAppBookingContext = createContext(null);
 
 const POLL_MS = 12_000;
 
-function phaseToastVi(phaseKey) {
+function phaseToastEn(phaseKey) {
   switch (phaseKey) {
     case "checkin":
-      return "Trạng thái lưu trú: đang nhận phòng.";
+      return "Check-in is in progress.";
     case "room_ready":
-      return "Phòng của bạn đã sẵn sàng.";
+      return "Your room is ready.";
     case "in_room":
-      return "Đã vào phòng — chúc bạn nghỉ ngơi vui vẻ.";
+      return "You're checked in — enjoy your stay.";
     case "checkout":
-      return "Đã trả phòng.";
+      return "You've checked out.";
     case "completed":
-      return "Lưu trú đã hoàn tất.";
+      return "Your stay is complete.";
     default:
-      return `Trạng thái lưu trú đã cập nhật (${phaseKey}).`;
+      return `Stay status updated: ${phaseKey}.`;
   }
 }
 
@@ -45,7 +45,7 @@ export function GuestAppBookingProvider({ children }) {
     const ref = (bookingRef || "").trim();
     if (!ref) {
       setSession(null);
-      setSessionError("Nhập mã đặt phòng.");
+      setSessionError("Enter a booking reference.");
       setSessionLoading(false);
       return;
     }
@@ -58,13 +58,13 @@ export function GuestAppBookingProvider({ children }) {
       setSession(data);
       const phase = data?.stay_phase_key;
       if (phase != null && prevPhaseRef.current != null && prevPhaseRef.current !== phase) {
-        showToast(phaseToastVi(phase));
+        showToast(phaseToastEn(phase));
       }
       prevPhaseRef.current = phase;
     } catch (e) {
       if (!mountedRef.current) return;
       setSession(null);
-      setSessionError(e?.message || "Không tải được dữ liệu.");
+      setSessionError(e?.message || "Could not load session.");
       prevPhaseRef.current = null;
     } finally {
       if (mountedRef.current) setSessionLoading(false);

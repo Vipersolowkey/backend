@@ -66,7 +66,7 @@ function GuestAppLayoutShell() {
             </Link>
           </div>
           <label className="flex flex-col gap-1 text-[0.65rem] font-semibold uppercase tracking-wide text-white/45">
-            Mã đặt (booking)
+            Booking reference
             <input
               value={bookingRef}
               onChange={(e) => setBookingRef(e.target.value)}
@@ -76,7 +76,7 @@ function GuestAppLayoutShell() {
               spellCheck={false}
             />
           </label>
-          {sessionLoading ? <p className="text-xs text-emerald-200/70">Đang đồng bộ với PMS…</p> : null}
+          {sessionLoading ? <p className="text-xs text-emerald-200/70">Syncing with PMS…</p> : null}
           {sessionError ? <p className="text-xs text-rose-300/90">{sessionError}</p> : null}
         </div>
       </header>

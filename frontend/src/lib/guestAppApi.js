@@ -110,7 +110,7 @@ export function guestAppBillExportUrl(bookingRef) {
   return `${API_BASE_URL}/guest-app/bill-export?${q}`;
 }
 
-/** Thêm dòng folio (minibar / dining / …) — đồng bộ bill. */
+/** Add a folio line (minibar / dining / …); updates bill totals. */
 export async function guestAppAddFolioLine({ booking_ref, category, description, amount }) {
   const response = await fetch(`${API_BASE_URL}/guest-app/folio-line`, {
     method: "POST",
