@@ -145,6 +145,13 @@ function SidebarNavIcon({ name }) {
           <path d="M8 3v4M16 3v4M4 11h16" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
         </svg>
       );
+    case "room-board":
+      return (
+        <svg {...svgProps}>
+          <path d="M4 21V8l8-5 8 5v13" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M9 21v-8h6v8" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
     case "reports":
       return (
         <svg {...svgProps}>
@@ -157,6 +164,28 @@ function SidebarNavIcon({ name }) {
         <svg {...svgProps}>
           <circle cx="12" cy="9" r="3.5" stroke="currentColor" strokeWidth="1.65" />
           <path d="M6 19c0-3.5 3-5 6-5s6 1.5 6 5" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+        </svg>
+      );
+    case "guest-app":
+      return (
+        <svg {...svgProps}>
+          <rect x="7" y="3" width="10" height="18" rx="2.5" stroke="currentColor" strokeWidth="1.65" />
+          <path d="M10 6.5h4M10 17.5h4" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" />
+        </svg>
+      );
+    case "owner-guest-pulse":
+      return (
+        <svg {...svgProps}>
+          <path d="M4 16c2.5-4 5-6 8-6s5.5 2 8 6" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+          <path d="M4 12c2-2.5 4.5-4 8-4s6 1.5 8 4" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" opacity="0.7" />
+          <circle cx="12" cy="8" r="2" stroke="currentColor" strokeWidth="1.65" />
+        </svg>
+      );
+    case "insights-rankings":
+      return (
+        <svg {...svgProps}>
+          <path d="M5 19V9M12 19V5M19 19v-7" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
+          <path d="M4 21h16" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" />
         </svg>
       );
     default:
@@ -376,8 +405,12 @@ export function OrganicLayout({ pageKey, hero, children, sideArtwork = true }) {
   const navItems = [
     { key: "overview", label: "Overview", path: "/overview" },
     { key: "calendar", label: "Calendar", path: "/calendar" },
+    { key: "room-board", label: "Phòng & HK", path: "/operations/rooms" },
     { key: "reports", label: "Reports", path: "/reports" },
     { key: "guests", label: "Guests CRM", path: "/guests" },
+    { key: "guest-app", label: "Guest app", path: "/guest-app" },
+    { key: "owner-guest-pulse", label: "App pulse", path: "/owner-guest-pulse" },
+    { key: "insights-rankings", label: "Rankings", path: "/insights-rankings" },
     { key: "sales-ai", label: "Sales AI", path: "/sales-ai" },
     { key: "competitors", label: "Competitors", path: "/competitors" },
     { key: "alerts", label: "Alerts", path: "/alerts" },

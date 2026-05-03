@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import {
+  API_BASE_URL,
   buildGuestRequest,
   consumeSseStream,
   fallbackChatMessages,
@@ -40,9 +41,9 @@ export default function SalesAIPage() {
     customerName: "",
     customerMessage:
       "Looking for a clean room near the beach, reliable service, and fair pricing for 2 guests for 2 nights.",
-    partySize: 2,
-    nights: 2,
-    budget: 320,
+    partySize: "",
+    nights: "",
+    budget: "",
     travelIntent: "leisure",
   });
   const [advisor, setAdvisor] = useState(fallbackGuestAdvisor);
@@ -112,7 +113,7 @@ export default function SalesAIPage() {
     setLoadingChat(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/v1/ai/guest-chat/stream", {
+      const response = await fetch(`${API_BASE_URL}/ai/guest-chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

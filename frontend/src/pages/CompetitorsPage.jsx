@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  API_BASE_URL,
   cityOptions,
   classifyCommentTone,
   consumeSseStream,
@@ -208,7 +209,7 @@ export default function CompetitorsPage() {
     setLoadingChat(true);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/v1/ai/competitor-chat/stream", {
+      const response = await fetch(`${API_BASE_URL}/ai/competitor-chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

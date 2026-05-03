@@ -76,8 +76,8 @@ class GuestAdvisorRequest(BaseModel):
     source: str | None = None
     customer_name: str | None = None
     customer_message: str
-    party_size: int = 2
-    nights: int = 2
+    party_size: int | None = None
+    nights: int | None = None
     budget: float | None = None
     travel_intent: str = "leisure"
 
@@ -129,8 +129,8 @@ class GuestChatRequest(BaseModel):
     source: str | None = None
     customer_name: str | None = None
     customer_message: str
-    party_size: int = 2
-    nights: int = 2
+    party_size: int | None = None
+    nights: int | None = None
     budget: float | None = None
     travel_intent: str = "leisure"
     history: list[GuestChatMessage] = []

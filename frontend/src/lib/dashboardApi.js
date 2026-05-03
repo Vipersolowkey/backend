@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api/v1";
 
 export function getApiOrigin() {
   try {
@@ -731,6 +731,13 @@ export async function fetchGuestCrm(guestId) {
   return response.json();
 }
 
+/** Room/service ratings + upsell add-on usage (seeded rollup API). */
+export async function fetchInsightsLeaderboards() {
+  const response = await fetch(`${API_BASE_URL}/insights/leaderboards`);
+  if (!response.ok) throw new Error("Failed to load insights leaderboards.");
+  return response.json();
+}
+
 export async function evaluateAlertThresholds(propertyId = null) {
   const response = await fetch(`${API_BASE_URL}/alert-thresholds/evaluate`, {
     method: "POST",
@@ -763,14 +770,20 @@ export const pricingSimRoomOptions = [
 ];
 export const fetchPromoEmail = (payload) => jsonRequest("/marketing/generate-promo-email", payload);
 
+export function optionalPositiveInt(value) {
+  if (value === "" || value == null) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 export function buildGuestRequest({ areaName, source, customerName, customerMessage, partySize, nights, budget, travelIntent }) {
   return {
     area_name: areaName,
     source: source || null,
     customer_name: customerName || null,
     customer_message: customerMessage,
-    party_size: Number(partySize) || 2,
-    nights: Number(nights) || 2,
+    party_size: optionalPositiveInt(partySize),
+    nights: optionalPositiveInt(nights),
     budget: budget === "" || budget == null ? null : Number(budget),
     travel_intent: travelIntent,
   };

@@ -92,3 +92,5 @@ Quy trình tương tự (virtualenv, `seed_db`, `uvicorn`, sau đó `npm run dev
 ---
 
 Tài liệu dự án bổ sung (nếu có): [TAI_LIEU_DU_AN.md](TAI_LIEU_DU_AN.md).
+
+**Định hướng mở rộng (app khách, up sell, hai persona chủ/khách):** [DINH_HUONG_APP_KHACH_HOTEL.md](DINH_HUONG_APP_KHACH_HOTEL.md).

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -209,10 +210,139 @@ def _preferred_language(payload: GuestAdvisorRequest, history: list[dict] | None
     return "en"
 
 
+def _infer_party_size_from_text(text: str) -> int | None:
+    if not text:
+        return None
+    t = text.lower()
+    patterns = [
+        r"\b(\d+)\s*(?:people|persons|person|guests|guest|pax|adults?|kids?)\b",
+        r"\b(?:party|group|family)\s*(?:of|with)?\s*(\d+)\b",
+        r"\b(\d+)\s*(?:người|khách)\b",
+    ]
+    for pat in patterns:
+        m = re.search(pat, t, re.IGNORECASE)
+        if m:
+            n = int(m.group(1))
+            if 1 <= n <= 20:
+                return n
+    return None
+
+
+def _conversation_text_for_party(history: list[dict] | None, latest: str) -> str:
+    parts: list[str] = []
+    if history:
+        for item in history:
+            if str(item.get("role")) == "user":
+                parts.append(str(item.get("content", "")))
+    parts.append(latest or "")
+    return " ".join(parts)
+
+
+def _effective_party_size(payload: GuestAdvisorRequest, history: list[dict] | None = None) -> int:
+    if payload.party_size is not None:
+        return max(1, int(payload.party_size))
+    conv = _conversation_text_for_party(history, payload.customer_message or "")
+    inferred = _infer_party_size_from_text(conv)
+    if inferred is not None:
+        return inferred
+    return 2
+
+
+def _nights_for_internal_math(payload: GuestAdvisorRequest) -> int:
+    return max(1, int(payload.nights)) if payload.nights is not None else 1
+
+
+def _last_assistant_focus_room(history: list[dict], available_room_types: list[str]) -> str | None:
+    sorted_names = sorted(available_room_types, key=len, reverse=True)
+    for item in reversed(history):
+        if str(item.get("role")) != "assistant":
+            continue
+        content = str(item.get("content", ""))
+        lowered = content.lower()
+        best: str | None = None
+        best_pos = -1
+        for name in sorted_names:
+            pos = lowered.find(name.lower())
+            if pos > best_pos:
+                best_pos = pos
+                best = name
+        if best:
+            return best
+    return None
+
+
+def _message_asks_services_not_new_room(text: str) -> bool:
+    t = (text or "").lower().strip()
+    if not t:
+        return False
+    service_markers = (
+        "service",
+        "services",
+        "include",
+        "included",
+        "comes with",
+        "come with",
+        "add on",
+        "add-on",
+        "addon",
+        "amenities",
+        "package",
+        "buffet",
+        "breakfast",
+        "transfer",
+        "checkout",
+        "go with",
+        "kèm",
+        "đi kèm",
+        "dịch vụ",
+        "tiện ích",
+        "gồm",
+    )
+    switch_markers = (
+        "other room",
+        "different room",
+        "another room",
+        "change room",
+        "switch room",
+        "upgrade",
+        "downgrade",
+        "instead of",
+        "rather have",
+        "phòng khác",
+        "đổi phòng",
+    )
+    return any(m in t for m in service_markers) and not any(m in t for m in switch_markers)
+
+
+def _guest_snapshot_for_llm(payload: GuestAdvisorRequest, history: list[dict]) -> dict[str, object]:
+    """Omit unset intake fields so the model does not treat CRM defaults as guest-stated facts."""
+    snap: dict[str, object] = {
+        "area_name": payload.area_name,
+        "travel_intent": payload.travel_intent,
+        "latest_customer_message": payload.customer_message,
+    }
+    if payload.source is not None:
+        snap["source"] = payload.source
+    if payload.customer_name:
+        snap["customer_name"] = payload.customer_name
+    if payload.party_size is not None:
+        snap["party_size_from_intake_form"] = payload.party_size
+    if payload.nights is not None:
+        snap["nights_from_intake_form"] = payload.nights
+    if payload.budget is not None:
+        snap["budget_total_from_intake_form"] = payload.budget
+    inferred = _infer_party_size_from_text(
+        _conversation_text_for_party(history, payload.customer_message or "")
+    )
+    if inferred is not None and payload.party_size is None:
+        snap["party_size_inferred_from_conversation"] = inferred
+    return snap
+
+
 def _budget_per_night(payload: GuestAdvisorRequest) -> float | None:
     if payload.budget is None:
         return None
-    return payload.budget / max(payload.nights, 1)
+    return payload.budget / max(_nights_for_internal_math(payload), 1)
 
 
 def _infer_buyer_type(payload: GuestAdvisorRequest) -> str:
@@ -223,7 +353,7 @@ def _infer_buyer_type(payload: GuestAdvisorRequest) -> str:
         return "efficiency_buyer"
     if intent in {"family", "group"}:
         return "family_planner"
-    if payload.budget is not None and payload.budget / max(payload.nights, 1) < 110:
+    if payload.budget is not None and payload.budget / max(_nights_for_internal_math(payload), 1) < 110:
         return "price_sensitive"
     return "balanced_value_buyer"
 
@@ -233,10 +363,16 @@ def _load_room_types(db: Session) -> list[RoomType]:
     return list(db.scalars(stmt).all())
 
 
-def _choose_room_offer(room_types: list[RoomType], payload: GuestAdvisorRequest) -> OfferRecommendation:
+def _choose_room_offer(
+    room_types: list[RoomType],
+    payload: GuestAdvisorRequest,
+    history: list[dict] | None = None,
+) -> OfferRecommendation:
+    party_eff = _effective_party_size(payload, history)
     sorted_types = sorted(room_types, key=lambda item: Decimal(str(item.base_price)))
     if not sorted_types:
-        fallback_price = payload.budget / max(payload.nights, 1) if payload.budget else 120
+        n = _nights_for_internal_math(payload)
+        fallback_price = payload.budget / n if payload.budget else 120
         return OfferRecommendation(
             room_type="Deluxe Room",
             price_anchor=f"${fallback_price:.0f} per night",
@@ -256,7 +392,7 @@ def _choose_room_offer(room_types: list[RoomType], payload: GuestAdvisorRequest)
         )
     ]
 
-    if payload.party_size >= 4:
+    if party_eff >= 4:
         if family_candidates:
             chosen = family_candidates[0]
         elif len(sorted_types) >= 2:
@@ -271,7 +407,7 @@ def _choose_room_offer(room_types: list[RoomType], payload: GuestAdvisorRequest)
 
     base_price = Decimal(str(chosen.base_price))
     upsell_items = ["Breakfast add-on", "Airport transfer", "Late checkout"]
-    if payload.party_size >= 3:
+    if party_eff >= 3:
         upsell_items.insert(0, "Extra bed or family setup")
     if payload.travel_intent.lower() in {"romantic", "honeymoon"}:
         upsell_items.insert(0, "Romantic room decor")
@@ -322,14 +458,21 @@ def _build_advisor_copy(
     offer: OfferRecommendation,
 ) -> tuple[str, str, list[str], list[str]]:
     language = _preferred_language(payload)
+    party_eff = _effective_party_size(payload, None)
+    if payload.nights is not None:
+        stay_vi = f"{party_eff} khách ở {payload.nights} đêm"
+        stay_en = f"{party_eff} guests over {payload.nights} nights"
+    else:
+        stay_vi = f"{party_eff} khách (hỏi số đêm trước khi chốt tổng giá nhiều đêm)"
+        stay_en = f"{party_eff} guests (confirm stay length before quoting a multi-night total)"
 
     if language == "vi":
         summary = (
-            f"Hướng phù hợp nhất lúc này là {offer.room_type} cho nhóm {payload.party_size} khách ở {payload.nights} đêm. "
+            f"Hướng phù hợp nhất lúc này là {offer.room_type} cho nhóm {stay_vi}. "
             "Nên bán theo hướng ở ổn, dễ chốt và có thêm một tiện ích nhỏ để gói nhìn đáng tiền hơn."
         )
         sales_script = (
-            f"Case này em sẽ đi theo {offer.room_type}. Phòng này hợp hơn cho {payload.party_size} khách ở {payload.nights} đêm, "
+            f"Case này em sẽ đi theo {offer.room_type}. Phòng này hợp hơn cho {stay_vi}, "
             f"rồi mình gói thêm {offer.upsell_items[0].lower()} để deal trông trọn hơn thay vì chỉ nói giá phòng."
         )
         objection_handling = [
@@ -345,11 +488,11 @@ def _build_advisor_copy(
         return summary, sales_script, objection_handling, follow_up_questions
 
     summary = (
-        f"The strongest fit right now is {offer.room_type} for {payload.party_size} guests over {payload.nights} nights. "
+        f"The strongest fit right now is {offer.room_type} for {stay_en}. "
         "Lead with comfort and value first, then strengthen the package with one practical perk."
     )
     sales_script = (
-        f"For this stay, I would lead with {offer.room_type}. It suits {payload.party_size} guests over {payload.nights} nights well, "
+        f"For this stay, I would lead with {offer.room_type}. It suits {stay_en} well, "
         f"and we can add {offer.upsell_items[0].lower()} so the offer feels stronger than a room-only comparison."
     )
     objection_handling = [
@@ -533,10 +676,10 @@ def _score_lead(payload: GuestAdvisorRequest) -> tuple[int, str, str, str, list[
     signals: list[str] = []
     blockers: list[str] = []
 
-    if payload.party_size >= 2:
+    if payload.party_size is not None and payload.party_size >= 2:
         score += 6
         signals.append("Concrete party size provided")
-    if payload.nights >= 2:
+    if payload.nights is not None and payload.nights >= 2:
         score += 8
         signals.append("Multi-night stay increases booking value")
     if payload.budget is not None:
@@ -711,7 +854,7 @@ def generate_conversion_playbook(db: Session, payload: GuestAdvisorRequest) -> d
 
 def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, history: list[dict]) -> dict:
     room_types = _load_room_types(db)
-    offer = _choose_room_offer(room_types, payload)
+    offer = _choose_room_offer(room_types, payload, history)
     competitor_context, praise_points, complaint_points = _build_competitor_context(db, payload.area_name, payload.source)
     available_room_types = _build_real_offer_options(room_types, offer.room_type)
     previously_mentioned = _extract_previously_mentioned_room_types(history, available_room_types)
@@ -720,8 +863,15 @@ def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, histor
         history, available_room_types, payload.customer_message or "", language
     )
     fulfillment_hints = _room_rate_hints(room_types, fulfillment_room) if fulfillment_room else {}
+    focus_room = (
+        fulfillment_room
+        or _last_assistant_focus_room(history, available_room_types)
+        or offer.room_type
+    )
     if fulfillment_room:
         fresh_options = [fulfillment_room]
+    elif _message_asks_services_not_new_room(payload.customer_message or ""):
+        fresh_options = [focus_room]
     else:
         fresh_options = _next_room_type_options(available_room_types, previously_mentioned, offer.room_type)
     buyer_type = _infer_buyer_type(payload)
@@ -731,9 +881,15 @@ def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, histor
         "Reply in the same language as the guest. "
         "Do not begin with 'I understand', 'Toi hieu', 'Minh hieu', or 'Sure'. "
         "Only use room names from the provided available_room_types. "
+        "Grounding: never claim the guest stated a budget, number of nights, or party size unless that exact detail "
+        "appears in a user message inside `history`, or is explicitly present under *_from_intake_form in `guest_context` "
+        "and you clearly attribute it to their booking details (not to casual chat). If nights or budget are unknown, "
+        "ask one short question instead of inventing totals (e.g. do not multiply a nightly rate by assumed nights). "
         "When the guest sends a short affirmative (e.g. có / yes / ok) right after you offered details, a quote, "
         "or an availability check for a named room, answer with concrete information for THAT room only; "
         "use fulfillment_rate_hints when provided. Do not pivot to a different room category in that situation. "
+        "If the guest only asks what is included, services, or add-ons, keep discussing `conversation_focus_room` "
+        "— do not introduce a different room from `fresh_room_options` unless they ask to change or compare rooms. "
         "Use fresh_room_options to rotate only when the guest asks for another option, a comparison, "
         "or explicitly wants a different idea — not when they confirm your prior offer about a specific room. "
         "Be concise, warm, sales-ready, and specific."
@@ -742,9 +898,10 @@ def prepare_guest_chat_context(db: Session, payload: GuestAdvisorRequest, histor
         {
             "task": "Return plain text only. Answer the latest guest message naturally and move the conversation forward.",
             "language": language,
-            "guest": payload.model_dump(),
+            "guest_context": _guest_snapshot_for_llm(payload, history),
             "history": history[-8:],
             "recommended_room_type": offer.room_type,
+            "conversation_focus_room": focus_room,
             "fresh_room_options": fresh_options,
             "fulfillment_room": fulfillment_room,
             "fulfillment_rate_hints": fulfillment_hints,

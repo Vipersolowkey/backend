@@ -13,9 +13,14 @@ from app.models import (  # noqa: F401
     CompetitorData,
     CountrySummary,
     Guest,
+    GuestFolioLine,
     MonthlyRevenueSummary,
     Room,
+    RoomHousekeepingState,
     RoomType,
+    RoomTypeRatingSummary,
+    ServiceRatingSummary,
+    UpsellUsageSummary,
 )
 from app.models.property_ops import (  # noqa: F401
     AlertThreshold,
@@ -89,6 +94,18 @@ def create_app() -> FastAPI:
         if _scheduler is not None:
             _scheduler.shutdown(wait=False)
             _scheduler = None
+
+    @app.get("/")
+    def root() -> dict:
+        """Landing when opening the API host in a browser (no route was defined for `/` before)."""
+        return {
+            "service": settings.app_name,
+            "message": "API is running. Open /docs for Swagger, /health for a quick check, or call routes under the api prefix.",
+            "docs": "/docs",
+            "openapi_json": "/openapi.json",
+            "health": "/health",
+            "api_v1_prefix": settings.api_v1_prefix,
+        }
 
     @app.get("/health")
     def health() -> dict:

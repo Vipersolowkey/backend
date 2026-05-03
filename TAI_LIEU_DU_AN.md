@@ -1,7 +1,7 @@
 # Tài liệu dự án — Hotel AI / Quản trị khách sạn & phân tích
 
 **Cập nhật:** tháng 5/2026  
-**Mục đích tài liệu:** mô tả ngắn gọn *repo này đang làm gì*, cấu trúc, API và cách chạy. Bản đề xuất chiến lược chi tiết nằm trong `HOTEL_AI_PROPOSAL.md`; bản hướng dẫn sản phẩm/CLI nằm trong `PRODUCT_README.md`.
+**Mục đích tài liệu:** mô tả ngắn gọn *repo này đang làm gì*, cấu trúc, API và cách chạy. Bản đề xuất chiến lược chi tiết nằm trong `HOTEL_AI_PROPOSAL.md`; bản hướng dẫn sản phẩm/CLI nằm trong `PRODUCT_README.md`. **Định hướng app khách + upsell + cá nhân hóa** (sau phiên họp) nằm trong [`DINH_HUONG_APP_KHACH_HOTEL.md`](./DINH_HUONG_APP_KHACH_HOTEL.md).
 
 ---
 

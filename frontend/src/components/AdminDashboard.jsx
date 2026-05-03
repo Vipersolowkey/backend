@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
+import { API_BASE_URL, optionalPositiveInt } from "../lib/dashboardApi";
 
 const fallbackMonthlyRevenue = {
   monthLabel: "August 2017",
@@ -370,7 +370,8 @@ const fallbackPlaybook = {
 const fallbackChatMessages = [
   {
     role: "assistant",
-    content: "Chào anh/chị — em có thể gợi ý phòng, gói và cách xử lý khi khách so giá.",
+    content:
+      "Hi — I can suggest rooms, packages, and how to respond when guests compare prices.",
   },
 ];
 
@@ -642,7 +643,7 @@ function OrganicPageHero({ eyebrow, title, description, stats, note }) {
           <BotanicalFlourish className="h-24 w-48 text-[rgba(107,66,38,0.58)]" />
           <p className="text-sm leading-7 text-[var(--earth-text-muted)]">{note}</p>
           <div className="rounded-[26px_16px_30px_18px] border border-[rgba(143,175,143,0.28)] bg-[rgba(143,175,143,0.08)] p-4 text-sm leading-7 text-[var(--earth-secondary)]">
-            Thiết kế mới ưu tiên khoảng thở, nhịp nội dung mềm và khả năng quét thông tin tự nhiên như đang xem một editorial premium thay vì một dashboard khô cứng.
+            The refreshed layout favors breathing room, a softer editorial rhythm, and scanning that feels closer to a premium magazine than a rigid control panel.
           </div>
         </div>
       </div>
@@ -670,10 +671,10 @@ function OrganicSection({ eyebrow, title, description, action, children }) {
 function normalizeUiErrorMessage(error, fallbackMessage) {
   const raw = String(error?.message || "").toLowerCase();
   if (raw.includes("failed to fetch")) {
-    return "Không kết nối được tới backend. Kiểm tra xem FastAPI có đang chạy không.";
+    return "Can't reach the backend. Make sure the FastAPI server is running.";
   }
   if (raw.includes("network")) {
-    return "Kết nối mạng hoặc backend đang có vấn đề.";
+    return "Network or backend issue — try again.";
   }
   return fallbackMessage;
 }
@@ -685,10 +686,10 @@ function getAlertSavings(alert) {
 function normalizeBackendErrorMessage(error, fallbackMessage) {
   const raw = String(error?.message || "").toLowerCase();
   if (raw.includes("failed to fetch")) {
-    return "Không kết nối được tới backend. Kiểm tra xem FastAPI có đang chạy không.";
+    return "Can't reach the backend. Make sure the FastAPI server is running.";
   }
   if (raw.includes("network")) {
-    return "Kết nối mạng hoặc backend đang có vấn đề.";
+    return "Network or backend issue — try again.";
   }
   return fallbackMessage;
 }
@@ -784,16 +785,16 @@ function GuestAdvisorPanel({
         <div className="hover-glow rounded-[28px] bg-slate-950 p-6 text-white">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Khách hàng</span>
+              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Guest</span>
               <input
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
                 value={form.customerName}
                 onChange={(event) => onChange("customerName", event.target.value)}
-                placeholder="Tên khách"
+                placeholder="Guest name"
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Nhu cầu</span>
+              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Trip type</span>
               <select
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
                 value={form.travelIntent}
@@ -807,7 +808,7 @@ function GuestAdvisorPanel({
               </select>
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Số khách</span>
+              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Guests</span>
               <input
                 type="number"
                 min="1"
@@ -817,7 +818,7 @@ function GuestAdvisorPanel({
               />
             </label>
             <label className="block">
-              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Số đêm</span>
+              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Nights</span>
               <input
                 type="number"
                 min="1"
@@ -827,26 +828,26 @@ function GuestAdvisorPanel({
               />
             </label>
             <label className="block sm:col-span-2">
-              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Ngân sách dự kiến</span>
+              <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Budget (est.)</span>
               <input
                 type="number"
                 min="0"
                 className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
                 value={form.budget}
                 onChange={(event) => onChange("budget", event.target.value)}
-                placeholder="Tổng ngân sách cho cả stay"
+                placeholder="Total budget for the stay"
               />
             </label>
           </div>
 
           <label className="mt-4 block">
-            <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Tin nhắn của khách</span>
+            <span className="text-xs uppercase tracking-[0.24em] text-slate-400">Guest message</span>
             <textarea
               rows={7}
               className="mt-2 w-full rounded-3xl border border-white/10 bg-white/5 px-4 py-4 text-sm leading-7 text-white outline-none placeholder:text-slate-500"
               value={form.customerMessage}
               onChange={(event) => onChange("customerMessage", event.target.value)}
-              placeholder="Ví dụ: Tôi đi 2 người, muốn gần biển, sạch sẽ, giá hợp lý và có ăn sáng."
+              placeholder="e.g. Two guests, near the beach, clean room, fair price, breakfast included."
             />
           </label>
 
@@ -856,7 +857,7 @@ function GuestAdvisorPanel({
             disabled={loading}
             className="mt-5 inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {loading ? "Đang tư vấn..." : "Generate AI Advice"}
+            {loading ? "Generating advice..." : "Generate AI Advice"}
           </button>
         </div>
 
@@ -1160,7 +1161,7 @@ function CompetitorChatWidget({
               rows={3}
               value={input}
               onChange={(event) => onInputChange(event.target.value)}
-              placeholder="Ví dụ: Khách đang chê đối thủ nào nhiều nhất về sạch sẽ và dịch vụ?"
+              placeholder="e.g. Which competitor do guests criticize most on cleanliness and service?"
               className="min-h-[84px] flex-1 rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition focus:border-teal-500"
             />
             <button
@@ -1200,9 +1201,9 @@ function CompetitorChatWidget({
           <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
             <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Good Questions</p>
             <div className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
-              <p>Đối thủ nào đang mạnh nhất về cảm nhận sạch sẽ và view?</p>
-              <p>Nếu muốn giữ ADR, tôi nên phản công bằng giá hay bằng service promise?</p>
-              <p>Review nào cho thấy khoảng trống rõ nhất để marketing khai thác?</p>
+              <p>Which competitor leads on perceived cleanliness and views?</p>
+              <p>To protect ADR, should we counter on price or on a stronger service promise?</p>
+              <p>Which reviews highlight the clearest gap for marketing to exploit?</p>
             </div>
           </div>
         </div>
@@ -1666,10 +1667,10 @@ export default function AdminDashboard({ initialPage = "overview" }) {
   const [guestAdvisorForm, setGuestAdvisorForm] = useState({
     customerName: "",
     customerMessage:
-      "Tôi muốn một phòng sạch, gần biển, dịch vụ ổn, giá hợp lý cho 2 người trong 2 đêm.",
-    partySize: 2,
-    nights: 2,
-    budget: 320,
+      "We want a clean room near the beach, solid service, fair price — two guests, two nights.",
+    partySize: "",
+    nights: "",
+    budget: "",
     travelIntent: "leisure",
   });
   const [loadingBookingId, setLoadingBookingId] = useState(null);
@@ -1726,7 +1727,7 @@ export default function AdminDashboard({ initialPage = "overview" }) {
         );
       } catch {
         setStatusTone("warning");
-        setStatusMessage("Đang dùng dữ liệu mẫu vì backend chưa phản hồi.");
+        setStatusMessage("Using sample data because the backend did not respond.");
       } finally {
         setLoadingDashboard(false);
       }
@@ -1870,8 +1871,8 @@ export default function AdminDashboard({ initialPage = "overview" }) {
       source: selectedSource || null,
       customer_name: guestAdvisorForm.customerName || null,
       customer_message: guestAdvisorForm.customerMessage,
-      party_size: Number(guestAdvisorForm.partySize) || 2,
-      nights: Number(guestAdvisorForm.nights) || 2,
+      party_size: optionalPositiveInt(guestAdvisorForm.partySize),
+      nights: optionalPositiveInt(guestAdvisorForm.nights),
       budget: guestAdvisorForm.budget === "" ? null : Number(guestAdvisorForm.budget),
       travel_intent: guestAdvisorForm.travelIntent,
     };
@@ -1951,8 +1952,8 @@ export default function AdminDashboard({ initialPage = "overview" }) {
           source: selectedSource || null,
           customer_name: guestAdvisorForm.customerName || null,
           customer_message: message,
-          party_size: Number(guestAdvisorForm.partySize) || 2,
-          nights: Number(guestAdvisorForm.nights) || 2,
+          party_size: optionalPositiveInt(guestAdvisorForm.partySize),
+          nights: optionalPositiveInt(guestAdvisorForm.nights),
           budget: guestAdvisorForm.budget === "" ? null : Number(guestAdvisorForm.budget),
           travel_intent: guestAdvisorForm.travelIntent,
           history: nextHistory,
@@ -2055,7 +2056,10 @@ export default function AdminDashboard({ initialPage = "overview" }) {
     } catch (error) {
       setStatusTone("error");
       setStatusMessage(
-        normalizeBackendErrorMessage(error, "Không thể tạo promo email lúc này. Kiểm tra backend hoặc model AI.")
+        normalizeBackendErrorMessage(
+          error,
+          "Could not generate the promo email right now. Check the backend or AI model.",
+        )
       );
     } finally {
       setLoadingBookingId(null);
@@ -2259,55 +2263,55 @@ export default function AdminDashboard({ initialPage = "overview" }) {
     const map = {
       overview: {
         eyebrow: "Warm Earth Overview",
-        title: "Bức tranh doanh thu và hành vi thị trường được kể lại như một bản tóm lược điều hành cao cấp.",
+        title: "Revenue and market behavior, framed like an executive brief.",
         description:
-          "Overview giờ được bố cục lại như một executive briefing: ít nhiễu, nhiều khoảng thở, và mọi tín hiệu quan trọng đều được dẫn mắt theo đúng nhịp.",
+          "Overview reads as a calm executive briefing: less noise, more whitespace, and key signals sequenced in a natural scan path.",
         stats: [
           { label: "Revenue", value: currency.format(monthlyRevenue.totalRevenue) },
           { label: "ADR", value: currency.format(monthlyRevenue.averageAdr) },
           { label: "Risk Alerts", value: String(alerts.length).padStart(2, "0") },
         ],
         note:
-          "Từ competitor insight đến action queue, từng section đều được đặt trong các khối organic rõ tầng, giúp người quản lý nhìn thông tin như đọc một premium report hơn là một màn điều khiển kỹ thuật.",
+          "From competitor insight to action queue, each section sits in layered organic blocks so leaders read a premium report—not a flat control panel.",
       },
       sales: {
         eyebrow: "Sales AI Atelier",
-        title: "Một không gian tư vấn mềm mại để AI nói như nhân viên đặt phòng giàu kinh nghiệm.",
+        title: "A softer consultative space where AI speaks like an experienced reservations host.",
         description:
-          "Sales AI được chuyển thành một journey tư vấn: chẩn đoán nhu cầu, đọc nhiệt lead, xây playbook rồi trôi mượt sang đối thoại đa lượt.",
+          "Sales AI is structured as a journey: diagnose intent, read lead heat, build a playbook, then flow into multi-turn dialogue.",
         stats: [
           { label: "Lead Score", value: String(guestLeadScore.lead_score).padStart(2, "0") },
           { label: "Buyer Type", value: formatEnumLabel(guestLeadScore.buyer_type) },
           { label: "Model", value: guestAdvisor.model_used },
         ],
         note:
-          "Page này ưu tiên cảm giác chăm sóc cá nhân, nên các khối được xếp như một salon tư vấn: ấm, thân thiện và đủ khoảng trống để hội thoại trở thành trung tâm.",
+          "This page favors a personal-care feel: blocks are arranged like a consultation salon—warm, approachable, and centered on conversation.",
       },
       competitors: {
         eyebrow: "Competitor Garden",
-        title: "Theo dõi đối thủ bằng một bố cục giàu chất biên tập, không còn là danh sách card lặp lại.",
+        title: "Competitive intelligence with editorial rhythm—not a wall of repeating cards.",
         description:
-          "Competitors bây giờ nhấn mạnh nhịp đọc: snapshot thị trường, fast compare, watchlist chi tiết và chatbot analyst được sắp theo chiều sâu nhận định.",
+          "Competitors emphasizes reading flow: market snapshot, fast compare, detailed watchlist, and an analyst chatbot sequenced for depth.",
         stats: [
           { label: "Tracked Hotels", value: String(competitorSnapshot.total).padStart(2, "0") },
           { label: "Available", value: String(competitorSnapshot.availableCount).padStart(2, "0") },
           { label: "Source Mix", value: competitorSnapshot.sourceLeader },
         ],
         note:
-          "Các divider blob và ornamental flourish giúp phần competitor giống một journal thị trường sống động hơn là một bảng dữ liệu phẳng.",
+          "Blob dividers and ornamental flourishes make the competitor area feel more like a market journal than a flat data grid.",
       },
       alerts: {
         eyebrow: "Retention Studio",
-        title: "Cảnh báo hủy phòng được xử lý như một studio can thiệp doanh thu, rõ ưu tiên và rất dễ thao tác.",
+        title: "Cancellation risk handled like a revenue studio—clear priority, easy actions.",
         description:
-          "Alerts được tổ chức lại thành một không gian chăm sóc booking rủi ro cao, nơi mỗi card đều có lý do, khả năng phục hồi và hành động giữ khách thật rõ.",
+          "Alerts are organized as a workspace for high-risk bookings: each card shows why it matters, recovery odds, and concrete retention steps.",
         stats: [
           { label: "High Risk", value: String(alertsSummary.total).padStart(2, "0") },
           { label: "Gap", value: currency.format(alertsSummary.totalSavings || 0) },
           { label: "Offers", value: String(alertsSummary.generatedCount).padStart(2, "0") },
         ],
         note:
-          "Mục tiêu của page này là giảm áp lực quyết định. Nhân sự nhìn vào là biết booking nào đáng cứu trước và nên dùng ngôn ngữ giữ khách theo hướng nào.",
+          "The goal is to reduce decision fatigue: teams can see which bookings to save first and what guest-facing language fits best.",
       },
     };
 
@@ -2475,26 +2479,26 @@ export default function AdminDashboard({ initialPage = "overview" }) {
         <div className="page-enter space-y-8">
         <OrganicSection
           eyebrow="Sales Orchestration"
-          title="Một workflow tư vấn hoàn chỉnh từ nhu cầu khách đến cú chốt cuối cùng."
-          description="Thay vì đặt từng panel rời rạc, page này được tổ chức lại như một hành trình sales: mở đầu bằng lời tư vấn, đi qua chẩn đoán nhiệt lead, rồi kết bằng đối thoại nhiều lượt."
+          title="A full consultative workflow from guest intent to the final close."
+          description="Instead of scattered panels, this page reads as a sales journey: open with guidance, diagnose lead heat, then finish with multi-turn dialogue."
         >
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-[28px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.52)] p-5">
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--earth-primary)]">Advisor</p>
               <p className="mt-3 text-sm leading-7 text-[var(--earth-text-muted)]">
-                AI bắt đầu bằng việc hiểu ý định lưu trú, ngân sách và kiểu khách để đề xuất đúng room type.
+                The AI starts by understanding stay intent, budget, and guest type to recommend the right room category.
               </p>
             </div>
             <div className="rounded-[28px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.52)] p-5">
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--earth-primary)]">Playbook</p>
               <p className="mt-3 text-sm leading-7 text-[var(--earth-text-muted)]">
-                Lead scoring và conversion playbook giúp đội ngũ biết khi nào nên trấn an, khi nào nên upsell và khi nào nên close.
+                Lead scoring and a conversion playbook help the team know when to reassure, when to upsell, and when to close.
               </p>
             </div>
             <div className="rounded-[28px] border border-[rgba(107,66,38,0.14)] bg-[rgba(255,255,255,0.52)] p-5">
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--earth-primary)]">Conversation</p>
               <p className="mt-3 text-sm leading-7 text-[var(--earth-text-muted)]">
-                Multi-turn chat giữ lại ngữ cảnh và objection để AI hành xử giống một reservation consultant mềm mại hơn.
+                Multi-turn chat keeps context and objections so the AI behaves more like a thoughtful reservations consultant.
               </p>
             </div>
           </div>
@@ -2844,7 +2848,7 @@ export default function AdminDashboard({ initialPage = "overview" }) {
             })}
             {!filteredAlerts.length ? (
               <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
-                Không tìm thấy booking phù hợp với bộ lọc hiện tại.
+                No bookings match the current filters.
               </div>
             ) : null}
           </div>

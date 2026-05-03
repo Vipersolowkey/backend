@@ -23,14 +23,19 @@ from app.models import (
     CompetitorData,
     CountrySummary,
     Guest,
+    GuestFolioLine,
     GuestNote,
     GuestTag,
     GuestTimelineEvent,
     MonthlyRevenueSummary,
     Property,
     Room,
+    RoomHousekeepingState,
     RoomType,
     RoomTypePriceRule,
+    RoomTypeRatingSummary,
+    ServiceRatingSummary,
+    UpsellUsageSummary,
 )
 from app.services.competitor_import import import_multiple_competitor_json_files
 from app.services.pricing_log import log_pricing_decision
@@ -134,11 +139,17 @@ def seed_room_types(db) -> dict[str, RoomType]:
 
 
 def seed_rooms(db, room_types: dict[str, RoomType], p_nt: Property, p_dl: Property) -> dict[str, Room]:
+    """One canonical room per type (used by CSV + demo bookings); numbers look like hotel inventory."""
     nt_codes = {"A", "B", "C", "D", "E", "F", "G"}
     rooms: dict[str, Room] = {}
-    for code, room_type in room_types.items():
+    for idx, code in enumerate(sorted(room_types.keys(), key=lambda c: (c not in nt_codes, c))):
+        room_type = room_types[code]
         pid = p_nt.id if code in nt_codes else p_dl.id
-        room = Room(room_number=f"{code}-101", room_type_id=room_type.id, property_id=pid, status="available")
+        brand = "NT" if code in nt_codes else "DL"
+        wing = 21 + (idx % 5)
+        unit = 8 + (idx * 3) % 40
+        label = f"{brand}-{code}-{wing:02d}{unit:02d}"
+        room = Room(room_number=label, room_type_id=room_type.id, property_id=pid, status="available")
         db.add(room)
         rooms[code] = room
     db.flush()
@@ -227,6 +238,37 @@ def seed_ideal_country_summary(db) -> None:
             )
         )
 
+    extra_countries: list[tuple[str, int, int, Decimal]] = [
+        ("NZL", 198, 186, Decimal("118.40")),
+        ("ITA", 176, 162, Decimal("108.90")),
+        ("NLD", 154, 146, Decimal("115.20")),
+        ("SWE", 128, 120, Decimal("104.60")),
+        ("ARE", 412, 392, Decimal("156.30")),
+        ("MEX", 186, 168, Decimal("82.40")),
+        ("BRA", 164, 148, Decimal("76.80")),
+        ("ZAF", 142, 130, Decimal("88.10")),
+        ("RUS", 268, 228, Decimal("91.50")),
+        ("ESP", 224, 208, Decimal("99.40")),
+        ("BEL", 118, 110, Decimal("107.20")),
+        ("AUT", 132, 124, Decimal("103.80")),
+        ("CHE", 186, 178, Decimal("148.60")),
+        ("NOR", 98, 92, Decimal("119.40")),
+        ("PRT", 112, 104, Decimal("86.70")),
+        ("VUT", 42, 40, Decimal("94.20")),
+        ("KHM", 188, 172, Decimal("68.50")),
+        ("LAO", 96, 88, Decimal("62.30")),
+        ("MMR", 74, 66, Decimal("59.40")),
+    ]
+    for country, total_bookings, successful_bookings, avg_adr in extra_countries:
+        db.add(
+            CountrySummary(
+                country=country,
+                total_bookings=total_bookings,
+                successful_bookings=successful_bookings,
+                avg_adr=avg_adr,
+            )
+        )
+
 
 def seed_ideal_monthly_revenue(db) -> None:
     """36 rolling months with seasonal resort curve + trend — dashboard-friendly."""
@@ -279,10 +321,16 @@ def seed_ideal_cancellation_summary(db) -> None:
         "Domestic weekend",
         "Intl fly-in",
         "Group series",
+        "Khách nội địa — công tác",
+        "Gia đình dịp lễ",
+        "Cặp đôi honeymoon",
+        "MICE / đoàn nhỏ",
+        "Bleisure APAC",
+        "Flash sale OTA",
     ]
     deposits = ["Non-refundable", "Partial 50%", "Flexible 24h", "Credit voucher only"]
     rng = random.Random(2026)
-    for idx in range(22):
+    for idx in range(42):
         total_b = rng.randint(120, 980)
         rate_pct = Decimal(str(round(rng.uniform(7.5, 36.8), 2)))
         canceled = int(round(float(total_b) * float(rate_pct) / 100.0))
@@ -306,7 +354,7 @@ def seed_modern_synthetic_bookings(db, rooms: dict[str, Room]) -> None:
     if not codes:
         codes = list(rooms.keys())
     last_free = {c: date(2025, 5, 20) for c in codes}
-    statuses = ["confirmed"] * 7 + ["canceled"] * 2 + ["checked_in"]
+    statuses = ["confirmed"] * 6 + ["canceled"] * 2 + ["checked_in"] * 2 + ["checked_out"]
     first_names = (
         "An",
         "Binh",
@@ -323,11 +371,38 @@ def seed_modern_synthetic_bookings(db, rooms: dict[str, Room]) -> None:
         "Mateo",
         "Noor",
         "Opal",
+        "Văn",
+        "Thị",
+        "Minh",
+        "Quang",
+        "Hương",
+        "Đức",
+        "Phương",
+        "Tuấn",
+        "Hạnh",
+        "Ngọc",
+        "Kiệt",
     )
-    last_names = ("Nguyen", "Tran", "Pham", "Kim", "Patel", "Silva", "Nowak", "Brown", "Meyer", "Sato")
+    last_names = (
+        "Nguyen",
+        "Tran",
+        "Pham",
+        "Kim",
+        "Patel",
+        "Silva",
+        "Nowak",
+        "Brown",
+        "Meyer",
+        "Sato",
+        "Lê",
+        "Hoàng",
+        "Vũ",
+        "Đặng",
+        "Bùi",
+    )
 
     bid = 900000
-    for _ in range(140):
+    for _ in range(260):
         code = rng.choice(codes)
         gap = rng.randint(3, 16)
         ci = last_free[code] + timedelta(days=gap)
@@ -340,7 +415,9 @@ def seed_modern_synthetic_bookings(db, rooms: dict[str, Room]) -> None:
         guest = Guest(
             full_name=f"{rng.choice(first_names)} {rng.choice(last_names)}",
             email=f"synthetic.{bid}@demo.hotel",
-            country_code=rng.choice(["VNM", "KOR", "SGP", "JPN", "USA", "DEU", "AUS"]),
+            country_code=rng.choice(
+                ["VNM", "KOR", "SGP", "JPN", "USA", "DEU", "AUS", "TWN", "THA", "MYS", "GBR", "FRA", "CAN", "NZL"],
+            ),
         )
         db.add(guest)
         db.flush()
@@ -371,7 +448,7 @@ def seed_pricing_decision_demo(db, rooms: dict[str, Room], room_types: dict[str,
         ("manual_override", "baseline", "GM hold rate — conference block"),
         ("rules_audit", "baseline", "Clamp hit max_price ceiling"),
     ]
-    for i in range(48):
+    for i in range(80):
         use_nt = rng.random() < 0.62
         codes = nt_codes if use_nt else dl_codes
         if not codes:
@@ -473,6 +550,66 @@ def seed_da_lat_competitors(db) -> None:
             hotel_url="https://www.agoda.com/",
             reviews=[{"comment": "Host-led coffee tour; thin walls.", "reviewer": None, "review_date": None}],
         ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Đà Lạt",
+            hotel_name="Đà Lạt Zen Garden Hotel",
+            current_price=Decimal("59.00"),
+            currency="USD",
+            availability_status="Few rooms left",
+            hotel_url="https://www.agoda.com/",
+            reviews=[{"comment": "Khu vườn chill; wifi ổn định.", "reviewer": None, "review_date": None}],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Đà Lạt",
+            hotel_name="Mimosa Valley Resort",
+            current_price=Decimal("124.00"),
+            currency="USD",
+            availability_status="Selling fast",
+            hotel_url="https://www.agoda.com/",
+            reviews=[{"comment": "View thung lũng; BBQ tối ấn tượng.", "reviewer": None, "review_date": None}],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Đà Lạt",
+            hotel_name="Stratus Cloud Hostel",
+            current_price=Decimal("22.00"),
+            currency="USD",
+            availability_status="available",
+            hotel_url="https://www.agoda.com/",
+            reviews=[{"comment": "Dorm sạch; phù hợp backpacker.", "reviewer": None, "review_date": None}],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Đà Lạt",
+            hotel_name="Hồ Tuyền Lâm Lakeside",
+            current_price=Decimal("98.00"),
+            currency="USD",
+            availability_status="Limited availability",
+            hotel_url="https://www.agoda.com/",
+            reviews=[{"comment": "Yên tĩnh; hơi xa chợ đêm.", "reviewer": None, "review_date": None}],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Đà Lạt",
+            hotel_name="Dalat Art Nouveau Inn",
+            current_price=Decimal("54.00"),
+            currency="USD",
+            availability_status="available",
+            hotel_url="https://www.agoda.com/",
+            reviews=[{"comment": "Nội thất vintage; cầu thang hẹp.", "reviewer": None, "review_date": None}],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Đà Lạt",
+            hotel_name="Pinecode Glamping DL",
+            current_price=Decimal("76.00"),
+            currency="USD",
+            availability_status="Few rooms left",
+            hotel_url="https://www.agoda.com/",
+            reviews=[{"comment": "Lều cao cấp; đêm lạnh cần áo ấm.", "reviewer": None, "review_date": None}],
+        ),
     ]
     db.add_all(samples)
 
@@ -506,33 +643,80 @@ def seed_guest_crm_demo(db) -> None:
             db.add(GuestTag(guest_id=guest.id, tag=tag))
         db.add(GuestNote(guest_id=guest.id, body=note_body, author_label="Front desk"))
         db.add(
+            GuestNote(
+                guest_id=guest.id,
+                body="Ghi chú follow-up: đã gửi khảo sát NPS sau trả phòng (demo).",
+                author_label="Guest experience",
+            ),
+        )
+        db.add(
             GuestTimelineEvent(
                 guest_id=guest.id,
                 event_type="profile_enriched",
                 detail=f"Tagged {', '.join(tags)} from CRM demo seed.",
             )
         )
+        db.add(
+            GuestTimelineEvent(
+                guest_id=guest.id,
+                event_type="upsell_interest",
+                detail="Khách mở push ưu đãi Spa / xe đưa đón trong app (demo).",
+            ),
+        )
+        db.add(
+            GuestTimelineEvent(
+                guest_id=guest.id,
+                event_type="stay_signal",
+                detail="Lưu ý: ưu tiên phòng yên, tránh gần thang máy.",
+            ),
+        )
 
-    synth_tags = ("Pipeline demo", "Yield cohort", "Intl mix", "Weekend warrior", "Bleisure probe", "Corporate trial")
-    synth_guests = db.scalars(select(Guest).where(Guest.email.like("%@demo.hotel")).limit(220)).all()
+    synth_tags = (
+        "Pipeline demo",
+        "Yield cohort",
+        "Intl mix",
+        "Weekend warrior",
+        "Bleisure probe",
+        "Corporate trial",
+        "App-first",
+        "Upsell warm",
+        "Đà Lạt segment",
+        "Nha Trang beach",
+    )
+    synth_guests = db.scalars(select(Guest).where(Guest.email.like("%@demo.hotel")).limit(380)).all()
+    note_bodies = (
+        "Gọi món tối muộn — phản hồi tốt.",
+        "Đặt thêm gối — đã giao phòng.",
+        "Hỏi tour nhỏ trong ngày.",
+        "Yêu cầu invoice công ty.",
+        "Quan tâm gói anniversary.",
+    )
     for i, guest in enumerate(synth_guests):
-        if i % 3 != 0:
-            continue
-        db.add(GuestTag(guest_id=guest.id, tag=synth_tags[i % len(synth_tags)]))
-        if i % 15 == 0:
+        if i % 2 == 0:
+            db.add(GuestTag(guest_id=guest.id, tag=synth_tags[i % len(synth_tags)]))
+        if i % 7 == 0:
             db.add(
                 GuestNote(
                     guest_id=guest.id,
-                    body="Synthetic itinerary — demo CRM breadth.",
-                    author_label="System seed",
-                )
+                    body=note_bodies[i % len(note_bodies)],
+                    author_label="Concierge bot",
+                ),
             )
+        if i % 11 == 0:
             db.add(
                 GuestTimelineEvent(
                     guest_id=guest.id,
                     event_type="note_added",
                     detail="Auto note from synthetic booking cohort.",
                 )
+            )
+        if i % 19 == 0:
+            db.add(
+                GuestTimelineEvent(
+                    guest_id=guest.id,
+                    event_type="loyalty_touch",
+                    detail="Điểm thưởng + snack welcome đã ghi nhận.",
+                ),
             )
 
 
@@ -704,6 +888,55 @@ def seed_competitor_data(db) -> None:
                 {"reviewer": None, "review_date": None, "comment": "Personal service; excellent breakfast."},
             ],
         ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Nha Trang",
+            hotel_name="Lumina Bayfront Tower",
+            current_price=Decimal("88.00"),
+            currency="USD",
+            availability_status="Few rooms left",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "View vịnh đẹp; hồ bơi vô cực đông giờ vàng."},
+                {"reviewer": None, "review_date": None, "comment": "Giá hơi cao nhưng dịch vụ ổn định."},
+            ],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Nha Trang",
+            hotel_name="Saffron Street Hotel",
+            current_price=Decimal("64.00"),
+            currency="USD",
+            availability_status="available",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Gần chợ đêm; hơi ồn ban đêm."},
+            ],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Nha Trang",
+            hotel_name="Cam Ranh Pearl Connect",
+            current_price=Decimal("102.00"),
+            currency="USD",
+            availability_status="Limited availability",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Transfer resort mất 25 phút; bãi biển riêng."},
+            ],
+        ),
+        CompetitorData(
+            source="demo_seed",
+            search_area="Nha Trang",
+            hotel_name="Indigo Homestay NT",
+            current_price=Decimal("38.00"),
+            currency="USD",
+            availability_status="available",
+            hotel_url="https://www.agoda.com/",
+            reviews=[
+                {"reviewer": None, "review_date": None, "comment": "Host nhiệt tình; phòng nhỏ nhưng sạch."},
+            ],
+        ),
     ]
     db.add_all(sample_rows)
 
@@ -731,6 +964,13 @@ def seed_active_demo_bookings(db, rooms: dict[str, Room]) -> None:
         ("Tom Brennan", "t.brennan@email.com", "I", date(2026, 5, 9), 6, Decimal("690.00")),
         ("Yuki Tanaka", "y.tanaka@email.com", "K", date(2026, 5, 16), 8, Decimal("820.00")),
         ("Sofia Rossi", "s.rossi@email.com", "H", date(2026, 5, 21), 5, Decimal("590.00")),
+        ("Nguyễn Gia Bảo", "g.bao.nguyen@email.com", "D", date(2026, 6, 2), 6, Decimal("1120.00")),
+        ("Laura Schmidt", "l.schmidt@email.com", "F", date(2026, 6, 4), 4, Decimal("860.00")),
+        ("Phạm Thu Hà", "ha.pham@email.com", "C", date(2026, 6, 8), 7, Decimal("980.00")),
+        ("Diego Alvarez", "d.alvarez@email.com", "G", date(2026, 6, 12), 5, Decimal("740.00")),
+        ("Lê Khánh Vy", "vy.le@email.com", "I", date(2026, 6, 14), 6, Decimal("910.00")),
+        ("Hannah Wilson", "h.wilson@email.com", "E", date(2026, 7, 3), 8, Decimal("1320.00")),
+        ("Trần Quốc Huy", "huy.tran@email.com", "B", date(2026, 7, 9), 4, Decimal("560.00")),
     ]
 
     for index, (full_name, email, room_code, check_in, nights, total_price) in enumerate(samples, start=1):
@@ -752,6 +992,276 @@ def seed_active_demo_bookings(db, rooms: dict[str, Room]) -> None:
         )
 
 
+def seed_supplemental_rooms_and_bookings(db, room_types: dict[str, RoomType], p_nt: Property, p_dl: Property) -> None:
+    """Extra physical rooms + stays spread across floors (richer calendar / CRM / reports)."""
+    rng = random.Random(20260503)
+    nt_codes = [c for c in ("A", "B", "C", "D", "E", "F", "G") if c in room_types]
+    dl_codes = [c for c in ("H", "I", "K", "L", "P") if c in room_types]
+    pool: list[Room] = []
+    seq = 3100
+
+    for code in nt_codes:
+        rt = room_types[code]
+        for _ in range(5):
+            seq += 1
+            label = f"NT-{code}-X{seq}"
+            st = rng.choice(["available", "available", "available", "occupied", "maintenance"])
+            r = Room(room_number=label, room_type_id=rt.id, property_id=p_nt.id, status=st)
+            db.add(r)
+            pool.append(r)
+
+    for code in dl_codes:
+        rt = room_types[code]
+        for _ in range(3):
+            seq += 1
+            label = f"DL-{code}-X{seq}"
+            r = Room(room_number=label, room_type_id=rt.id, property_id=p_dl.id, status="available")
+            db.add(r)
+            pool.append(r)
+
+    db.flush()
+
+    vn_given = (
+        "Văn Hùng",
+        "Thị Mai",
+        "Minh Tuấn",
+        "Quang Huy",
+        "Lan Chi",
+        "Đức Anh",
+        "Phương Linh",
+        "Hạnh Nguyên",
+        "Ngọc Trâm",
+        "Kiệt Long",
+        "Hoài Nam",
+        "Bảo Châu",
+        "Thu Giang",
+        "Cát Tiên",
+        "Đình Phúc",
+    )
+    intl_names = (
+        "Oliver Schmidt",
+        "Amelia Clark",
+        "Raj Malhotra",
+        "Yuna Park",
+        "Marc Dubois",
+        "Elena Rossi",
+        "Sven Andersson",
+        "Chloe Martin",
+        "Kenji Watanabe",
+        "Isabel Costa",
+    )
+    countries = (
+        "VNM",
+        "VNM",
+        "VNM",
+        "KOR",
+        "JPN",
+        "SGP",
+        "AUS",
+        "DEU",
+        "GBR",
+        "USA",
+        "FRA",
+        "THA",
+        "MYS",
+        "TWN",
+        "NZL",
+        "ARE",
+    )
+
+    bid = 3_100_000
+    for i in range(175):
+        room = rng.choice(pool)
+        if rng.random() < 0.55:
+            full_name = rng.choice(vn_given)
+        else:
+            full_name = rng.choice(intl_names)
+        guest = Guest(
+            full_name=full_name,
+            email=f"stay.plus.{bid}@demo.hotel",
+            country_code=rng.choice(countries),
+        )
+        db.add(guest)
+        db.flush()
+        ci = date(2025, 8, 1) + timedelta(days=(i * 5 + rng.randint(0, 4)) % 420)
+        if ci > date(2026, 10, 15):
+            ci = date(2026, 3, 1) + timedelta(days=rng.randint(0, 200))
+        nights = rng.randint(1, 6)
+        co = ci + timedelta(days=nights)
+        adr = Decimal(str(round(rng.uniform(55, 178), 2)))
+        st = rng.choice(["confirmed", "confirmed", "confirmed", "checked_in", "checked_out", "canceled"])
+        db.add(
+            Booking(
+                booking_id=f"BKG-PLUS-{bid}",
+                guest_id=guest.id,
+                room_id=room.id,
+                check_in=ci,
+                check_out=co,
+                status=st,
+                total_price=(adr * Decimal(nights)).quantize(Decimal("0.01")),
+            ),
+        )
+        bid += 1
+
+
+def seed_guest_insights_rollups(db, room_types: dict[str, RoomType]) -> None:
+    """Synthetic satisfaction & upsell usage for leaderboards (demo)."""
+    room_specs: list[tuple[str, str, int]] = [
+        ("I", "4.93", 142),
+        ("F", "4.90", 228),
+        ("P", "4.88", 156),
+        ("D", "4.86", 338),
+        ("L", "4.85", 98),
+        ("E", "4.84", 189),
+        ("G", "4.83", 112),
+        ("H", "4.81", 164),
+        ("C", "4.79", 278),
+        ("K", "4.78", 108),
+        ("B", "4.76", 445),
+        ("A", "4.73", 612),
+    ]
+    for code, avg_s, n_rev in room_specs:
+        rt = room_types.get(code)
+        if rt is None:
+            continue
+        db.add(
+            RoomTypeRatingSummary(
+                room_type_id=rt.id,
+                avg_rating=Decimal(avg_s),
+                review_count=n_rev,
+            ),
+        )
+
+    services: list[tuple[str, str, str, int]] = [
+        ("spa", "Spa & therapeutic massage", "4.91", 124),
+        ("breakfast_buffet", "International breakfast buffet", "4.88", 468),
+        ("kids_club", "Kids club & family activities", "4.87", 86),
+        ("rooftop_bar", "Rooftop bar & sunset", "4.85", 256),
+        ("gym_fitness", "24/7 gym & morning yoga", "4.84", 142),
+        ("laundry_pressing", "Laundry & express pressing", "4.82", 212),
+        ("housekeeping", "Housekeeping & amenity refill", "4.81", 388),
+        ("concierge", "Concierge & day tours", "4.80", 198),
+        ("airport_transfer", "Airport transfer", "4.78", 224),
+        ("room_service", "Late-night room service", "4.76", 302),
+        ("pool", "Pool & pool bar", "4.75", 234),
+        ("beach_club", "Beach club & sun loungers", "4.74", 176),
+        ("meeting_micro", "Small meeting / hybrid room", "4.72", 64),
+    ]
+    for key, name_vi, avg_s, n_rev in services:
+        db.add(
+            ServiceRatingSummary(
+                service_key=key,
+                name_vi=name_vi,
+                avg_rating=Decimal(avg_s),
+                review_count=n_rev,
+            ),
+        )
+
+    upsells: list[tuple[str, str, int, int, str]] = [
+        ("addon_breakfast_pkg", "Extra breakfast / late checkout bundle", 156, 2288, "31200000"),
+        ("addon_airport_transfer", "Round-trip airport transfer", 132, 1960, "44800000"),
+        ("addon_spa_slot", "Spa golden-hour slot booking", 108, 1024, "22400000"),
+        ("addon_room_upgrade", "Room upgrade / sea view", 92, 812, "18200000"),
+        ("addon_rooftop_dinner", "Rooftop dinner set for two", 71, 540, "15800000"),
+        ("addon_kids_corner", "Kids corner gift & decor pack", 48, 620, "9200000"),
+        ("addon_romantic", "Romantic room turndown decor", 44, 548, "8800000"),
+        ("addon_pillow_oil", "Down pillow + essential oil", 74, 1420, "10200000"),
+        ("addon_minibar_pack", "Premium minibar package", 61, 940, "7800000"),
+        ("addon_early_bird", "Early breakfast (early flight)", 42, 488, "5900000"),
+        ("addon_laundry_express", "4-hour express laundry", 56, 1120, "6400000"),
+        ("addon_motor_rent", "Scooter / motorbike delivery to room", 88, 1680, "11800000"),
+        ("addon_snorkel_trip", "Half-day snorkeling tour", 63, 890, "13400000"),
+    ]
+    for sku, name_vi, o30, oall, rev30 in upsells:
+        db.add(
+            UpsellUsageSummary(
+                sku=sku,
+                name_vi=name_vi,
+                orders_last_30d=o30,
+                orders_all_time=oall,
+                revenue_last_30d=Decimal(rev30),
+            ),
+        )
+
+
+def seed_guest_app_experience(db) -> None:
+    """Folio + stay timeline + housekeeping board + tags for guest app demo (ORT-2026-0003)."""
+    b = db.scalar(select(Booking).where(Booking.booking_id == "ORT-2026-0003"))
+    if b:
+        if db.scalar(select(GuestFolioLine.id).where(GuestFolioLine.booking_id == b.id).limit(1)) is None:
+            db.add_all(
+                [
+                    GuestFolioLine(
+                        booking_id=b.id,
+                        category="minibar",
+                        description="Sparkling water x2",
+                        amount=Decimal("8.00"),
+                    ),
+                    GuestFolioLine(
+                        booking_id=b.id,
+                        category="laundry",
+                        description="Express shirt press x3",
+                        amount=Decimal("24.50"),
+                    ),
+                    GuestFolioLine(
+                        booking_id=b.id,
+                        category="spa",
+                        description="Foot reflexology (30 min)",
+                        amount=Decimal("42.00"),
+                    ),
+                ],
+            )
+        if (
+            db.scalar(
+                select(GuestTimelineEvent.id).where(
+                    GuestTimelineEvent.guest_id == b.guest_id,
+                    GuestTimelineEvent.event_type == "stay_app_checkin_started",
+                ),
+            )
+            is None
+        ):
+            db.add(
+                GuestTimelineEvent(
+                    guest_id=b.guest_id,
+                    event_type="stay_app_checkin_started",
+                    detail="Guest app seed — arrival desk started.",
+                ),
+            )
+        if (
+            db.scalar(
+                select(GuestTimelineEvent.id).where(
+                    GuestTimelineEvent.guest_id == b.guest_id,
+                    GuestTimelineEvent.event_type == "stay_app_room_ready",
+                ),
+            )
+            is None
+        ):
+            db.add(
+                GuestTimelineEvent(
+                    guest_id=b.guest_id,
+                    event_type="stay_app_room_ready",
+                    detail="Guest app seed — room inspected and released.",
+                ),
+            )
+        if db.scalar(select(GuestTag.id).where(GuestTag.guest_id == b.guest_id, GuestTag.tag == "Family")) is None:
+            db.add(GuestTag(guest_id=b.guest_id, tag="Family"))
+        if db.scalar(select(GuestTag.id).where(GuestTag.guest_id == b.guest_id, GuestTag.tag == "Guest app demo")) is None:
+            db.add(GuestTag(guest_id=b.guest_id, tag="Guest app demo"))
+        if db.scalar(select(GuestTag.id).where(GuestTag.guest_id == b.guest_id, GuestTag.tag == "Anniversary")) is None:
+            db.add(GuestTag(guest_id=b.guest_id, tag="Anniversary"))
+
+    hk_cycle = ("clean", "clean", "dirty", "in_progress", "dirty", "clean", "in_progress", "clean")
+    rooms = db.scalars(select(Room).where(Room.property_id == 1).order_by(Room.id).limit(24)).all()
+    for i, room in enumerate(rooms):
+        db.merge(
+            RoomHousekeepingState(
+                room_id=room.id,
+                status=hk_cycle[i % len(hk_cycle)],
+                last_note="Seed demo board",
+            ),
+        )
+
+
 def main() -> None:
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -770,8 +1280,11 @@ def main() -> None:
         seed_alert_thresholds(db, p_nt, p_dl)
         seed_active_demo_bookings(db, rooms)
         seed_modern_synthetic_bookings(db, rooms)
+        seed_supplemental_rooms_and_bookings(db, room_types, p_nt, p_dl)
         seed_pricing_decision_demo(db, rooms, room_types, p_nt, p_dl)
         seed_guest_crm_demo(db)
+        seed_guest_insights_rollups(db, room_types)
+        seed_guest_app_experience(db)
         db.commit()
 
     print("Database seeded successfully.")

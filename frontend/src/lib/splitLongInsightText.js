@@ -1,6 +1,6 @@
 /**
  * Turn long model summaries into list / paragraphs / labeled sections for readable UI.
- * Handles newlines, " - " / " – " clause separators, "Tiêu đề:" section markers, and sentence chunking.
+ * Handles newlines, " - " / " – " clause separators, labeled section markers (Vietnamese + English patterns), and sentence chunking.
  */
 
 /** Split before known report-style headings (VN + EN). */
