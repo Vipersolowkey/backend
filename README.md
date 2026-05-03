@@ -12,7 +12,9 @@ Tài liệu mô tả **phạm vi, chức năng và cách triển khai bản demo
 
 - Dashboard **doanh thu**, **tin hiệu ưu tiên** và **cảnh báo** gắn với nguy cơ **hủy phòng** khi áp lực giá từ thị trường.
 - **Đối thủ / khu vực**: dữ liệu competitor nhập sẵn; có thể bổ sung insight hoặc hội thoại qua AI khi bật nhà cung cấp LLM.
-- **Công cụ bổ sung** (tùy phiên bản mã nguồn): lịch **công suất phòng**, **xuất báo cáo** (Excel/CSV), **CRM khách** dạng nhẹ, **đa cơ sở / khu vực**, **ngưỡng cảnh báo** kèm webhook.
+- **App khách (guest app)** — trải nghiệm trong kỳ nghỉ: timeline lưu trú, ưu đãi theo segment CRM, đặt bàn / gọi món, folio & xuất bill, yêu cầu dọn phòng; đồng bộ qua API `guest-app` (nhập **mã booking** trên màn hình). Giao diện app khách hiện dùng **tiếng Anh** cho demo quốc tế.
+- **Vận hành phòng & buồng phòng (HK)** — bảng theo từng phòng: trạng thái lưu trú (trống / đã đặt / đang ở) và trạng thái dọn phòng; dành cho lễ tân / HK (`/operations/rooms`).
+- **Công cụ bổ sung** (tùy phiên bản mã nguồn): lịch **công suất phòng**, **xuất báo cáo** (Excel/CSV), **CRM khách** dạng nhẹ, **đa cơ sở / khu vực**, **ngưỡng cảnh báo** kèm webhook, **Owner guest pulse** (`/owner-guest-pulse`) — tổng quan tín hiệu góc chủ sở hữu liên quan app khách.
 
 Giải pháp **không** thay thế phần mềm quản lý buồng phòng (PMS) **đầy đủ**; thể hiện hướng **kết hợp dữ liệu, giao diện và AI** trong bối cảnh revenue / ops.
 
@@ -31,6 +33,10 @@ Sau khi ứng dụng web được khởi chạy (mục *Cài đặt và chạy t
 | **Sales AI** | Kịch bản tư vấn / bán hàng có hỗ trợ AI. |
 | **Competitors** | Theo dõi đối thủ, insight và chat liên quan thị trường. |
 | **Alerts** | Booking **rủi ro cao**, email giữ chân; có **đánh giá ngưỡng** (occupancy, số booking rủi ro). |
+| **Vận hành — Phòng & HK** | Danh sách phòng theo property: booking đang ở, mã đặt, trạng thái dọn phòng — đường dẫn **`/operations/rooms`** (menu Organic / Ops). |
+| **App khách** | Tab **Home / Offers / Dine / Me** — **`/guest-app`**, **`/guest-app/offers`**, **`/guest-app/dine`**, **`/guest-app/me`**. Nút **Ops** trên header app khách quay về dashboard tổng quan. |
+
+**Lưu ý:** Sau khi `seed_db`, dùng một **mã booking** có trong dữ liệu mẫu (ví dụ mặc định trên form app khách) để tải session, timeline và folio.
 
 Việc **trình chiếu hoặc ghi hình** luồng thao tác trên giao diện có thể đi kèm khi không triển khai demo trực tiếp trên máy người đọc.
 
@@ -62,7 +68,7 @@ pip install -r backend\requirements.txt
 Copy-Item backend\.env.example backend\.env
 $env:PYTHONPATH = "$PWD\backend"
 python backend\scripts\seed_db.py
-uvicorn app.main:app --reload --app-dir backend
+uvicorn app.main:app --reload --app-dir backend --host 127.0.0.1 --port 8000
 ```
 
 **Terminal 2 — giao diện:**
@@ -87,6 +93,8 @@ Quy trình tương tự (virtualenv, `seed_db`, `uvicorn`, sau đó `npm run dev
 
 - **Thư mục:** `backend/` (API, seed), `frontend/` (React/Vite).
 - **Kiểm tra API:** http://127.0.0.1:8000/health — **OpenAPI:** http://127.0.0.1:8000/docs  
+- **API app khách (REST):** prefix `/api/v1/guest-app/` — session, timeline, offers, dining/HK request, folio line, export bill, bảng phòng. Chi tiết tham số xem OpenAPI hoặc [TAI_LIEU_DU_AN.md](TAI_LIEU_DU_AN.md).
+- **Frontend — biến môi trường:** `VITE_API_BASE_URL` (mặc định `http://127.0.0.1:8000/api/v1`); tùy chọn `VITE_WEATHER_LAT` / `VITE_WEATHER_LON` cho widget thời tiết trên Home app khách.
 - **Bảo mật:** Bản demo **không** có xác thực người dùng; chỉ dùng trong môi trường cục bộ hoặc mạng tin cậy. Triển khai công khai cần HTTPS, auth và giới hạn tần suất gọi AI.
 
 ---
