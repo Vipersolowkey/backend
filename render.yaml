@@ -22,5 +22,8 @@ services:
     envVars:
       - key: DATABASE_URL
         value: sqlite:////data/app.db
+      # Free tier: no paid Shell — seed once at startup if DB has no properties (see render_auto_seed.py).
+      - key: SEED_ON_START
+        value: "1"
       - key: CORS_ORIGINS
         value: https://uel-hotel-demo.onrender.com,http://localhost:8080,http://127.0.0.1:8080

@@ -74,17 +74,17 @@ Repo có [`render.yaml`](render.yaml) (Web Service `docker` + env mẫu).
 2. Vào [Render Dashboard](https://dashboard.render.com) → **New** → **Blueprint** → chọn repo → xác nhận tạo service.
 3. Đợi build Docker (vài phút). URL dạng `https://<tên-service>.onrender.com`.
 4. Nếu đổi **tên service** trong Render, vào **Environment** sửa `CORS_ORIGINS` cho đúng URL mới (cùng domain với trình duyệt nếu sau này bạn tách FE/API).
-5. **Seed dữ liệu mẫu** (một lần): **Shell** của service trên Render (nếu có), chạy:
+5. **Dữ liệu mẫu:** Blueprint đặt `SEED_ON_START=1` — lần đầu container thấy SQLite **không có** bảng `properties` (hoặc rỗng) sẽ tự chạy `seed_db.py` khi khởi động, **không cần Shell**. Muốn tắt: Environment → `SEED_ON_START=0`. Muốn seed lại tay (máy có Shell hoặc local): vẫn có thể chạy lệnh trong khối code dưới.
 
    ```bash
    cd /app/backend && PYTHONPATH=/app/backend python scripts/seed_db.py
    ```
 
-   *(Cần `DATABASE_URL` đúng như trên service — mặc định blueprint là SQLite trong container.)*
-
 **Gói free:** không có persistent disk; SQLite có thể **trống hoặc mất** sau redeploy. Muốn dữ liệu bền: tạo **PostgreSQL** trên Render, đặt `DATABASE_URL` trỏ tới Postgres, chạy `seed_db` một lần.
 
 Nếu log báo **`unable to open database file`**: nguyên nhân thường là thư mục `/data` chưa tồn tại trong container. Bản image hiện tại tạo `/data` ở **entrypoint** + **Dockerfile**; hãy **commit + push** rồi **Manual Deploy** lại trên Render.
+
+**Shell Render trả phí:** trên gói free có thể không dùng Shell để chạy `seed_db`. Blueprint đặt **`SEED_ON_START=1`**: mỗi lần container khởi động, nếu SQLite **chưa có dòng `properties`** thì image tự chạy `scripts/seed_db.py` một lần (cần file `*.csv` đã được COPY vào image). Tắt bằng cách đặt `SEED_ON_START=0` trong Environment khi không muốn tự seed nữa.
 
 ---
 
